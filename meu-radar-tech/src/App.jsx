@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import OfferCard from './components/OfferCard'
 import { OFFERS as FAKE_OFFERS } from './data/offers'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = 'http://localhost:3000'
 
 export default function App() {
   const [offers,    setOffers]    = useState([])

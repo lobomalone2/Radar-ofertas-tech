@@ -1,100 +1,84 @@
 require('dotenv').config();
 const express = require('express');
 const path    = require('path');
-const { buscarProdutos, buscarRelampago } = require('./automacoes/services/mercadolivre');
+const fs      = require('fs');
+
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// ─── CORS para dev ────────────────────────────────────────────────────────────
+const JSON_PATH = path.join(__dirname, 'automacoes', 'services', 'ofertas_mercadolivre.json');
+
+// ─── CORS ─────────────────────────────────────────────────────────────────────
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
 
-// ─── Serve o frontend buildado ────────────────────────────────────────────────
-// Após rodar `npm run build` no frontend, copie o dist/ para backend/public/
-app.use(express.static(path.join(__dirname, 'public')));
-
-// ─── Cache em memória ─────────────────────────────────────────────────────────
-const cache = {
-  relampago: { data: null, expiresAt: 0 },
-  busca:     {},
-};
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+// ─── Lê o JSON do scraper ─────────────────────────────────────────────────────
+function lerOfertas() {
+  try {
+    if (!fs.existsSync(JSON_PATH)) return [];
+    const data = JSON.parse(fs.readFileSync(JSON_PATH, 'utf8'));
+    return data.map(item => ({
+      ...item,
+      expiresAt: item.expiresAt || Date.now() + 2 * 60 * 60 * 1000,
+    }));
+  } catch (err) {
+    console.error('Erro ao ler JSON:', err.message);
+    return [];
+  }
+}
 
 // ─── GET /api/relampago ───────────────────────────────────────────────────────
-app.get('/api/relampago', async (req, res) => {
-  try {
-    const agora = Date.now();
-
-    if (cache.relampago.data && agora < cache.relampago.expiresAt) {
-      return res.json({ ok: true, cached: true, total: cache.relampago.data.length, data: cache.relampago.data });
-    }
-
-    const ofertas = await buscarRelampago();
-    cache.relampago = { data: ofertas, expiresAt: agora + CACHE_TTL };
-
-    res.json({ ok: true, cached: false, total: ofertas.length, data: ofertas });
-  } catch (err) {
-    console.error('❌ /api/relampago:', err.message);
-    res.status(500).json({ ok: false, error: err.message });
-  }
+app.get('/api/relampago', (req, res) => {
+  const ofertas = lerOfertas();
+  res.json({ ok: true, total: ofertas.length, data: ofertas });
 });
 
-// ─── GET /api/buscar?q=termo ──────────────────────────────────────────────────
-app.get('/api/buscar', async (req, res) => {
-  const termo = req.query.q?.trim();
-  if (!termo) return res.status(400).json({ ok: false, error: 'Parâmetro ?q= obrigatório' });
+// ─── GET /api/buscar?q= ───────────────────────────────────────────────────────
+app.get('/api/buscar', (req, res) => {
+  const termo = req.query.q?.trim().toLowerCase();
+  if (!termo) return res.status(400).json({ ok: false, error: 'Parametro ?q= obrigatorio' });
 
-  try {
-    const agora    = Date.now();
-    const cacheKey = termo.toLowerCase();
-
-    if (cache.busca[cacheKey] && agora < cache.busca[cacheKey].expiresAt) {
-      return res.json({ ok: true, cached: true, termo, total: cache.busca[cacheKey].data.length, data: cache.busca[cacheKey].data });
-    }
-
-    const produtos = await buscarProdutos(termo);
-    cache.busca[cacheKey] = { data: produtos, expiresAt: agora + CACHE_TTL };
-
-    res.json({ ok: true, cached: false, termo, total: produtos.length, data: produtos });
-  } catch (err) {
-    console.error('❌ /api/buscar:', err.message);
-    res.status(500).json({ ok: false, error: err.message });
-  }
+  const filtrado = lerOfertas().filter(o =>
+    o.titulo?.toLowerCase().includes(termo) ||
+    o.categoria?.toLowerCase().includes(termo)
+  );
+  res.json({ ok: true, total: filtrado.length, data: filtrado });
 });
 
 // ─── GET /api/status ──────────────────────────────────────────────────────────
 app.get('/api/status', (req, res) => {
+  const existe = fs.existsSync(JSON_PATH);
   res.json({
-    ok:     true,
-    status: 'online',
-    uptime: `${Math.round(process.uptime())}s`,
-    cache: {
-      relampago: cache.relampago.data
-        ? `${cache.relampago.data.length} ofertas · expira em ${Math.round((cache.relampago.expiresAt - Date.now()) / 1000)}s`
-        : 'vazio',
-      buscas: Object.keys(cache.busca).length,
-    },
-    env: {
-      ML_CLIENT_ID:   process.env.ML_CLIENT_ID   ? '✓' : '✗ faltando',
-      TELEGRAM_TOKEN: process.env.TELEGRAM_TOKEN ? '✓' : '✗ faltando',
-    },
+    ok:            true,
+    status:        'online',
+    uptime:        `${Math.round(process.uptime())}s`,
+    json_existe:   existe,
+    total_ofertas: existe ? lerOfertas().length : 0,
   });
 });
 
-// ─── Fallback SPA ─────────────────────────────────────────────────────────────
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
-});
+// ─── Frontend ─────────────────────────────────────────────────────────────────
+const distPath = path.join(__dirname, 'meu-radar-tech', 'dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
+} else {
+  app.get('/', (req, res) => res.json({
+    ok:  true,
+    msg: 'API online.',
+    endpoints: ['/api/relampago', '/api/buscar?q=', '/api/status'],
+  }));
+}
 
-
-
+// ─── Start ────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`\n🟢 Server em http://localhost:${PORT}`);
-  console.log(`   /api/relampago  → ofertas`);
-  console.log(`   /api/buscar?q=  → busca`);
-  console.log(`   /api/status     → health check\n`);
+  console.log(`\nServidor em http://localhost:${PORT}`);
+  console.log(`  /api/relampago  -> serve ofertas_mercadolivre.json`);
+  console.log(`  /api/buscar?q=  -> filtra por termo`);
+  console.log(`  /api/status     -> health check\n`);
 });
-
-module.exports = app;
