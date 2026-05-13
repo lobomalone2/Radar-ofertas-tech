@@ -2,20 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import re
-import os
 
-TRACKING_ID = os.environ.get('ML_TRACKING_ID', 'cdbfghaec46766')
-
-def link_afiliado(url):
-    if not url or url == 'N/A':
-        return url
-    try:
-        sep = '&' if '?' in url else '?'
-        return f"{url}{sep}matt_tool={TRACKING_ID}"
-    except:
-        return url
-
-def get_mercadolivre_deals(category_id, category_name):
+def get_mercadolivre_deals(category_id, category_name, affiliate_tag):
     base_url = "https://www.mercadolivre.com.br/ofertas"
     params = {
         "promotion_type": "LIGHTNING_DEAL",
@@ -23,7 +11,8 @@ def get_mercadolivre_deals(category_id, category_name):
     }
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
+        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Referer": "https://www.mercadolivre.com.br/"
     }
 
     deals_list = []
@@ -31,49 +20,76 @@ def get_mercadolivre_deals(category_id, category_name):
     try:
         response = requests.get(base_url, params=params, headers=headers)
         response.raise_for_status()
+
         soup = BeautifulSoup(response.text, 'html.parser')
-
         product_cards = soup.find_all('div', class_='poly-card')
-        if not product_cards:
-            product_cards = soup.find_all('div', class_='ui-item__wrapper')
 
-        for card in product_cards:
-            title_element    = card.find(['a', 'h3', 'p'], class_='poly-component__title')
-            price_element    = card.find('span', class_='andes-money-amount__fraction')
-            discount_element = card.find('span', class_='poly-price__discount')
-            link_element     = card.find('a', href=True)
-            img_element      = card.find('img')
+        for idx, card in enumerate(product_cards):
+            # Título
+            title_element = card.find(['a', 'h3', 'p'], class_='poly-component__title')
+            titulo = title_element.text.strip() if title_element else 'N/A'
 
-            title    = title_element.text.strip() if title_element else 'N/A'
-            price    = price_element.text.strip()  if price_element else 'N/A'
-            discount = discount_element.text.strip() if discount_element else '0%'
-            link     = link_element['href'] if link_element else 'N/A'
-            foto     = img_element.get('src') or img_element.get('data-src', '') if img_element else ''
+            # Preços
+            preco_original = 0.0
+            preco_atual = 0.0
+            desconto_percentual = 0
 
-            if title != 'N/A' and price != 'N/A':
-                discount_value = 0
-                if discount != 'N/A':
-                    match = re.search(r'\d+', discount)
-                    if match:
-                        discount_value = int(match.group(0))
+            # 1. Tenta encontrar o preço riscado (Original)
+            del_element = card.find('del', class_='andes-money-amount')
+            if del_element:
+                orig_fraction = del_element.find('span', class_='andes-money-amount__fraction')
+                if orig_fraction:
+                    preco_original = float(orig_fraction.text.replace('.', '').replace(',', '.'))
 
-                # Converte preco para float
-                try:
-                    preco_float = float(price.replace('.', '').replace(',', '.'))
-                except:
-                    preco_float = 0
+            # 2. Tenta encontrar o preço atual (Promocional)
+            price_containers = card.find_all('span', class_='andes-money-amount')
+            for container in price_containers:
+                if not container.find_parent('del'):
+                    curr_fraction = container.find('span', class_='andes-money-amount__fraction')
+                    if curr_fraction:
+                        preco_atual = float(curr_fraction.text.replace('.', '').replace(',', '.'))
+                        break
+            
+            # 3. Desconto
+            discount_element = card.find('span', class_=re.compile(r'(poly-price__discount|andes-money-amount__discount)'))
+            if discount_element:
+                match = re.search(r'\d+', discount_element.text)
+                if match:
+                    desconto_percentual = int(match.group(0))
 
+            if preco_original == 0.0 and preco_atual > 0 and desconto_percentual > 0:
+                preco_original = round(preco_atual / (1 - (desconto_percentual / 100)), 2)
+            elif preco_original == 0.0:
+                preco_original = preco_atual
+
+            # Link com Etiqueta de Afiliado
+            link_element = card.find('a', href=True)
+            link = link_element['href'] if link_element else 'N/A'
+            if link != 'N/A':
+                # Anexa a etiqueta de afiliado
+                separator = "&" if "?" in link else "?"
+                link = f"{link}{separator}matt_tool={affiliate_tag}"
+
+            # Foto
+            img_element = card.find('img', class_='poly-component__picture')
+            foto = img_element.get('src') or img_element.get('data-src') if img_element else 'N/A'
+
+            # Hot
+            highlight = card.find('span', class_='poly-component__highlight')
+            hot = True if highlight and "IMPERDÍVEL" in highlight.text.upper() else False
+
+            if titulo != 'N/A' and preco_atual > 0:
                 deals_list.append({
-                    "id":            f"{category_id}-{len(deals_list)}",
-                    "categoria":     category_name,
-                    "titulo":        title,
-                    "preco":         preco_float,
-                    "precoOriginal": preco_float,
-                    "desconto":      discount_value,
-                    "link":          link_afiliado(link),
-                    "foto":          foto.replace('-I.jpg', '-O.jpg'),
-                    "hot":           discount_value >= 30,
-                    "expiresAt":     None
+                    "id": f"{category_id}-{idx}",
+                    "categoria": category_name,
+                    "titulo": titulo,
+                    "preco": preco_atual,
+                    "precoOriginal": preco_original,
+                    "desconto": desconto_percentual,
+                    "link": link,
+                    "foto": foto,
+                    "hot": hot,
+                    "expiresAt": None
                 })
 
     except Exception as e:
@@ -82,27 +98,28 @@ def get_mercadolivre_deals(category_id, category_name):
     return deals_list
 
 def main():
+    AFFILIATE_TAG = "cdbfghaec46766"
+    
     categories = {
         "MLB1648": "Informatica",
-        "MLB1051": "Eletronicos",
-        "MLB1000": "Audio e Video",
+        "MLB1051": "Celulares",
+        "MLB1000": "Eletronicos"
     }
 
     all_deals = []
     for cat_id, cat_name in categories.items():
-        print(f"Coletando: {cat_name}...")
-        deals = get_mercadolivre_deals(cat_id, cat_name)
+        print(f"Coletando ofertas para: {cat_name}")
+        deals = get_mercadolivre_deals(cat_id, cat_name, AFFILIATE_TAG)
         all_deals.extend(deals)
-        print(f"  {len(deals)} ofertas encontradas")
 
-    sorted_deals = sorted(all_deals, key=lambda x: x.get('desconto', 0), reverse=True)
+    all_deals.sort(key=lambda x: x['desconto'], reverse=True)
 
-    # Salva na pasta do projeto
-    output = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ofertas_mercadolivre.json')
-    with open(output, 'w', encoding='utf-8') as f:
-        json.dump(sorted_deals, f, ensure_ascii=False, indent=2)
-
-    print(f"\nTotal: {len(sorted_deals)} ofertas salvas em {output}")
+    output_filename = "ofertas_mercadolivre.json"
+    with open(output_filename, 'w', encoding='utf-8') as f:
+        json.dump(all_deals, f, ensure_ascii=False, indent=2)
+    
+    print(f"Total de ofertas encontradas: {len(all_deals)}")
+    print(f"Ofertas salvas em {output_filename}")
 
 if __name__ == "__main__":
     main()
