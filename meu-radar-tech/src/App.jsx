@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import OfferCard from './components/OfferCard'
+import HotBanner from './components/hotBanner' // Importa o novo componente
 import { OFFERS as FAKE_OFFERS } from './data/offers'
 
 const API = 'http://localhost:3000'
@@ -56,7 +57,7 @@ export default function App() {
   )
 
   return (
-    <div style={{ minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#05070a' }}>
 
       {/* Header */}
       <header style={{
@@ -142,6 +143,9 @@ export default function App() {
             {filtrados.length} produto{filtrados.length !== 1 ? 's' : ''}
           </span>
         </div>
+
+        {/* Hot Banner - Carrossel de Ofertas Mais Quentes */}
+        {!loading && <HotBanner offers={offers} />}
 
         {/* Grid */}
         {loading ? (

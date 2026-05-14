@@ -4,7 +4,7 @@
 @theme {
   --font-sans: 'DM Sans', sans-serif;
   --font-mono: 'DM Mono', monospace;
-  --color-bg:       #0f0f0f;
+  --color-bg:       #121212; /* Cor alterada aqui */
   --color-surface:  #181818;
   --color-surface2: #202020;
   --color-border:   rgba(255,255,255,0.07);
@@ -23,6 +23,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ... restante do seu CSS (scrollbar e animações) ... */
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
