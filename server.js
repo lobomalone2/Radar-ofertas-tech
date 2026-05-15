@@ -17,7 +17,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ─── Lê o JSON do scraper ─────────────────────────────────────────────────────
+
 function lerOfertas() {
   try {
     if (!fs.existsSync(JSON_PATH)) return [];
@@ -32,13 +32,13 @@ function lerOfertas() {
   }
 }
 
-// ─── GET /api/relampago ───────────────────────────────────────────────────────
+
 app.get('/api/relampago', (req, res) => {
   const ofertas = lerOfertas();
   res.json({ ok: true, total: ofertas.length, data: ofertas });
 });
 
-// ─── GET /api/buscar?q= ───────────────────────────────────────────────────────
+
 app.get('/api/buscar', (req, res) => {
   const termo = req.query.q?.trim().toLowerCase();
   if (!termo) return res.status(400).json({ ok: false, error: 'Parametro ?q= obrigatorio' });
@@ -50,7 +50,7 @@ app.get('/api/buscar', (req, res) => {
   res.json({ ok: true, total: filtrado.length, data: filtrado });
 });
 
-// ─── GET /api/status ──────────────────────────────────────────────────────────
+
 app.get('/api/status', (req, res) => {
   const existe = fs.existsSync(JSON_PATH);
   res.json({
@@ -67,7 +67,9 @@ const distPath = path.join(__dirname, 'meu-radar-tech', 'dist');
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
   app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
+  
 } else {
+  
   app.get('/', (req, res) => res.json({
     ok:  true,
     msg: 'API online.',
@@ -75,10 +77,12 @@ if (fs.existsSync(distPath)) {
   }));
 }
 
-// ─── Start ────────────────────────────────────────────────────────────────────
+
+
 app.listen(PORT, () => {
   console.log(`\nServidor em http://localhost:${PORT}`);
   console.log(`  /api/relampago  -> serve ofertas_mercadolivre.json`);
   console.log(`  /api/buscar?q=  -> filtra por termo`);
   console.log(`  /api/status     -> health check\n`);
+  
 });

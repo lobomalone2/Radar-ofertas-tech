@@ -1,16 +1,18 @@
 import React from 'react';
 
 export default function HotBanner({ offers }) {
-  // Filtra as ofertas mais quentes (maior desconto) e pega as 6 primeiras
+  // Filtra as ofertas mais quentes
+  
   const hotOffers = offers
     .sort((a, b) => b.desconto - a.desconto)
     .slice(0, 6);
 
   if (hotOffers.length === 0) {
-    return null; // Não renderiza se não houver ofertas quentes
+    return null;
   }
 
   return (
+    
     <div style={{
       marginBottom: '2rem',
       padding: '1rem',
@@ -33,13 +35,12 @@ export default function HotBanner({ offers }) {
       </h2>
       <div style={{
         display: 'flex',
-        overflowX: 'auto', // Habilita o scroll horizontal
+        overflowX: 'auto', 
         gap: '1rem',
-        paddingBottom: '10px', // Espaço para a barra de scroll
-        // Estilo para a barra de rolagem (compatibilidade cross-browser)
-        scrollbarWidth: 'thin', // Firefox
-        scrollbarColor: '#e8ff57 #181818', // Firefox
-        WebkitOverflowScrolling: 'touch', // iOS
+        paddingBottom: '10px',
+        scrollbarWidth: 'thin', 
+        scrollbarColor: '#e8ff57 #181818', 
+        WebkitOverflowScrolling: 'touch', 
         '&::-webkit-scrollbar': {
           height: '8px',
         },
@@ -60,8 +61,8 @@ export default function HotBanner({ offers }) {
             target="_blank"
             rel="noopener noreferrer"
             style={{
-              flexShrink: 0, // Impede que os itens encolham
-              width: '200px', // Largura fixa para cada card
+              flexShrink: 0, 
+              width: '200px', 
               background: '#1e1e1e',
               borderRadius: 8,
               padding: '1rem',
@@ -93,7 +94,7 @@ export default function HotBanner({ offers }) {
               fontWeight: 500,
               textAlign: 'center',
               marginBottom: '0.5rem',
-              height: '3em', // Limita a altura para 2 linhas
+              height: '3em',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               display: '-webkit-box',
