@@ -32,5 +32,5 @@
 
 ATUALIZANDO!!
 
-versão standalone e versão gama do projeto toda desenvolvida via termux no android, os commits a partir do dia  09/06 esta sendo desenvolvida no VS code utilizando o sistema operacional LINUX MINT XFCE.
+versão standalone e versão gama do projeto toda desenvolvida via termux no android, os commits a partir do dia  09/06 estão sendo desenvolvidos no VS code utilizando o sistema operacional LINUX MINT XFCE.
 
