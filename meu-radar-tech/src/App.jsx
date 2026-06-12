@@ -3,40 +3,43 @@ import OfferCard from './components/OfferCard'
 import HotBanner from './components/hotBanner' // Importa o novo componente
 import { OFFERS as FAKE_OFFERS } from './data/offers'
 
-const API = 'http://localhost:3000'
+const API = 'https://underpay-uptake-native.ngrok-free.dev';
 
 export default function App() {
   const [offers,    setOffers]    = useState([])
   const [loading,   setLoading]   = useState(true)
   const [categoria, setCategoria] = useState('Todos')
   const [busca,     setBusca]     = useState('')
-  const [modo,      setModo]      = useState('') // 'api' | 'demo'
+  const [modo,      setModo]      = useState('')
 
-  useEffect(() => {
+ useEffect(() => {
     const carregarOfertas = async () => {
       try {
-        const response = await fetch(`${API}/api/relampago`)
-
-        // se o servidor respondeu mas com erro (ex: 500), lança exceção
+        const response = await fetch(`${API}/api/relampago`, {
+          method: 'GET',
+          headers: {
+            'ngrok-skip-browser-warning': 'true', 
+            'Content-Type': 'application/json'
+          }
+        })
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
 
         const json = await response.json()
 
-        // se a API retornou mas sem dados, também cai no fallback
+        console.log("O QUE VEIO DA API VIA NGROK:", json)
+
         if (!json.data || json.data.length === 0) throw new Error('Sem dados')
 
         setOffers(json.data)
         setModo('api')
 
       } catch (err) {
-        // qualquer falha — servidor offline, sem internet, erro 500, etc.
-        // cai aqui e usa os dados locais silenciosamente
+
         console.warn('Backend indisponível, usando dados demo:', err.message)
         setOffers(FAKE_OFFERS)
         setModo('demo')
 
       } finally {
-        // sempre executa — para o loading independente do resultado
         setLoading(false)
       }
     }
