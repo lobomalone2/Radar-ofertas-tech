@@ -8,13 +8,29 @@
 
 ​🚀 Tecnologias Utilizadas
 
+
 ​React 19: Biblioteca para construção da interface.
+
 ​Vite: Build tool rápida para o ambiente de desenvolvimento.
+
 ​Tailwind CSS v4: Estilização moderna e utilitária.
+
 ​JavaScript (ES6+): Lógica e manipulação de dados.
+
 ​Git & GitHub: Versionamento de código e deploy.
+
+
+
+
+
 ​📱 Desenvolvimento Mobile-First
+
 ​O projeto é desenvolvido integralmente em ambiente Android (via Termux) utilizando:
 ​Termux: Emulador de terminal Linux para execução do Node.js.
 ​Acode: Editor de código mobile para escrita dos componentes
+
+
+ATUALIZANDO!!
+
+versão standalone e versão gama do projeto toda desenvolvida via termux no android, os commits a partir do dia  09/06 estão sendo desenvolvidos no VS code utilizando o sistema operacional LINUX MINT XFCE.
 
