@@ -12,7 +12,7 @@ const JSON_PATH = path.join(__dirname, 'automacoes', 'services', 'ofertas_mercad
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, https://underpay-uptake-native.ngrok-free.dev');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
