@@ -1,146 +1,139 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-export default function HotBanner({ offers }) {
-  // Filtra as ofertas mais quentes
-  
-  const hotOffers = offers
-    .sort((a, b) => b.desconto - a.desconto)
-    .slice(0, 6);
+/**
+ * Componente HeroCarousel - O novo topo da Radar.Tech
+ * Substitui o carrossel de ofertas por um espaço de banners de alto impacto.
+ */
+export default function HeroCarousel() {
+  const [currentSlide, setCurrentSlide] = useState(0);
 
-  if (hotOffers.length === 0) {
-    return null;
-  }
+  // Lista de banners (Você pode adicionar os links das imagens geradas aqui)
+  const banners = [
+    {
+      id: 1,
+      image: 'https://private-us-east-1.manuscdn.com/sessionFile/SAcwbItTS1PkjMEgHlIz74/sandbox/HDLH6DwzEXFG9k3c484DOg_1781969006811_na1fn_L2hvbWUvdWJ1bnR1L2Jhbm5lcl9jYXJvdXNlbF9tb2RlbA.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvU0Fjd2JJdFRTMVBrak1FZ0hsSXo3NC9zYW5kYm94L0hETEg2RHd6RVhGRzlrM2M0ODRET2dfMTc4MTk2OTAwNjgxMV9uYTFmbl9MMmh2YldVdmRXSjFiblIxTDJKaGJtNWxjbDlqWVhKdmRYTmxiRjl0YjJSbGJBLnBuZyIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc5ODc2MTYwMH19fV19&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=mNZ-CiVcsApq-Z2JYcEd32~gjIOQwHYPggmSgktaDCUbS7HM4GMRcP3zQ9OIgj3FYh-tszTs9m0b2sCGD3tiJb4kTlSzzXsoEoVK2Atuc~oY3gsJQDgEp8PsfDXliKwhmV-IFLHj3ZO8MdWBhXJD8Byg8OM2~dtmHnIWN3VmvG1B9i6uWQbXaCQrOcarYd2ghuH4wzxUwPi84kGR8cz6iECLsTFy1RIQmnSb4FOXIQsE2e8wl6Sph8E59QzA-Z7NY0N3mwO8Izk1Wy06Cl4S9Acq64sIN2EADW0k~PaS2Tb2LRdCD5lyxCp45rfoemlCUqkbBafRLSW-rlyYe~t5dQ__', // hero_banner_radar_tech.png
+      link: '/hardware',
+      alt: 'Hardware de Elite'
+    },
+    {
+      id: 2,
+      image: 'https://private-us-east-1.manuscdn.com/sessionFile/SAcwbItTS1PkjMEgHlIz74/sandbox/gTPmWLt0UsjOVV5qDvtAPM_1781967645291_na1fn_L2hvbWUvdWJ1bnR1L3Byb21vX2Jhbm5lcl9ncHU.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvU0Fjd2JJdFRTMVBrak1FZ0hsSXo3NC9zYW5kYm94L2dUUG1XTHQwVXNqT1ZWNXFEdnRBUE1fMTc4MTk2NzY0NTI5MV9uYTFmbl9MMmh2YldVdmRXSjFiblIxTDNCeWIyMXZYMkpoYm01bGNsOW5jSFUucG5nIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzk4NzYxNjAwfX19XX0_&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=XGYSMMkADvFJ1ZqfVWYjo~7JqO4t3feCAs17sCzExMQ6UOlXWvghO08f-4MH9Z9BmBfbkvOhNPjflH0ATmP4BrRSZZqfKPWeH~mL7D-Md4-mIZAY-m0ihug22pDTzzA5MSsdZlGbM2TXCFf4y1hG0oe6b4-wK1VHoImG-JivDMHhDgbgF7zCExUxlNxd4MMbOO7IjKXash0cNu2woeWr67ohIF7nKhJUEu8UrtIKjp09zx-B~mDRBWD8E5UBi~PZrAWUOcJMxoPX7PoDIMpVbi7h3TR7XrtJYnIPl6lpfMipkH48SD29kofrJwzQGmOXofx4G6iV~ofBdp-HhvrIkQ__', // banner_carousel_model.png
+      link: '/setups',
+      alt: 'Monte seu Setup'
+    }
+  ];
+
+  // Auto-play
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [banners.length]);
 
   return (
-    
     <div style={{
-      marginBottom: '2rem',
-      padding: '1rem',
-      background: 'linear-gradient(90deg, rgba(232,255,87,0.05) 0%, rgba(15,15,15,0) 100%)',
-      borderRadius: 12,
-      border: '1px solid rgba(232,255,87,0.1)',
-      boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+      width: '100%',
+      maxWidth: '1280px',
+      margin: '20px auto',
+      position: 'relative',
+      borderRadius: '24px',
+      overflow: 'hidden',
+      boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+      aspectRatio: '21 / 9', // Formato Ultra-wide como os banners gerados
+      background: '#000'
     }}>
-      <h2 style={{
-        fontFamily: 'var(--font-mono)',
-        fontSize: 16,
-        fontWeight: 600,
-        color: '#e8ff57',
-        marginBottom: '1rem',
-        textAlign: 'center',
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-      }}>
-        🔥 Ofertas Mais Quentes do Dia 🔥
-      </h2>
-      <div style={{
-        display: 'flex',
-        overflowX: 'auto', 
-        gap: '1rem',
-        paddingBottom: '10px',
-        scrollbarWidth: 'thin', 
-        scrollbarColor: '#e8ff57 #181818', 
-        WebkitOverflowScrolling: 'touch', 
-        '&::-webkit-scrollbar': {
-          height: '8px',
-        },
-        '&::-webkit-scrollbar-track': {
-          background: '#181818',
-          borderRadius: '10px',
-        },
-        '&::-webkit-scrollbar-thumb': {
-          background: '#e8ff57',
-          borderRadius: '10px',
-          border: '2px solid #181818',
-        },
-      }}>
-        {hotOffers.map((offer) => (
-          <a
-            key={offer.id}
-            href={offer.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              flexShrink: 0, 
-              width: '200px', 
-              background: '#1e1e1e',
-              borderRadius: 8,
-              padding: '1rem',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textDecoration: 'none',
-              color: '#f0f0f0',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-              transition: 'transform 0.2s ease-in-out',
-              '&:hover': {
-                transform: 'translateY(-5px)',
-              },
-            }}
-          >
+      {/* Slides */}
+      {banners.map((banner, index) => (
+        <div
+          key={banner.id}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            opacity: currentSlide === index ? 1 : 0,
+            transition: 'opacity 0.8s ease-in-out',
+            zIndex: currentSlide === index ? 1 : 0,
+          }}
+        >
+          <a href={banner.link}>
             <img
-              src={offer.foto}
-              alt={offer.titulo}
+              src={banner.image}
+              alt={banner.alt}
               style={{
                 width: '100%',
-                height: '120px',
-                objectFit: 'contain',
-                borderRadius: 4,
-                marginBottom: '0.5rem',
+                height: '100%',
+                objectFit: 'cover',
               }}
             />
-            <span style={{
-              fontSize: 12,
-              fontWeight: 500,
-              textAlign: 'center',
-              marginBottom: '0.5rem',
-              height: '3em',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-            }}>
-              {offer.titulo}
-            </span>
-            <div style={{
-              display: 'flex',
-              alignItems: 'baseline',
-              gap: '0.5rem',
-              marginBottom: '0.5rem',
-            }}>
-              <span style={{
-                fontSize: 18,
-                fontWeight: 700,
-                color: '#e8ff57',
-              }}>
-                R$ {offer.preco.toFixed(2).replace('.', ',')}
-              </span>
-              {offer.precoOriginal > offer.preco && (
-                <span style={{
-                  fontSize: 12,
-                  color: '#6b6b6b',
-                  textDecoration: 'line-through',
-                }}>
-                  R$ {offer.precoOriginal.toFixed(2).replace('.', ',')}
-                </span>
-              )}
-            </div>
-            {offer.desconto > 0 && (
-              <span style={{
-                fontSize: 14,
-                fontWeight: 600,
-                color: '#e8ff57',
-                background: 'rgba(232,255,87,0.15)',
-                padding: '4px 8px',
-                borderRadius: 4,
-              }}>
-                {offer.desconto}% OFF
-              </span>
-            )}
           </a>
+        </div>
+      ))}
+
+      {/* Indicadores (Pontinhos) */}
+      <div style={{
+        position: 'absolute',
+        bottom: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        display: 'flex',
+        gap: '10px',
+        zIndex: 10
+      }}>
+        {banners.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentSlide(index)}
+            style={{
+              width: currentSlide === index ? '30px' : '10px',
+              height: '10px',
+              borderRadius: '5px',
+              border: 'none',
+              background: currentSlide === index ? '#CCFF00' : 'rgba(255,255,255,0.3)',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
+            }}
+          />
         ))}
       </div>
+
+      {/* Setas de Navegação (Opcional) */}
+      <button 
+        onClick={() => setCurrentSlide(currentSlide === 0 ? banners.length - 1 : currentSlide - 1)}
+        style={arrowButtonStyle('left')}
+      >
+        ‹
+      </button>
+      <button 
+        onClick={() => setCurrentSlide(currentSlide === banners.length - 1 ? 0 : currentSlide + 1)}
+        style={arrowButtonStyle('right')}
+      >
+        ›
+      </button>
     </div>
   );
 }
+
+const arrowButtonStyle = (side) => ({
+  position: 'absolute',
+  top: '50%',
+  [side]: '20px',
+  transform: 'translateY(-50%)',
+  background: 'rgba(0,0,0,0.4)',
+  backdropFilter: 'blur(4px)',
+  color: '#fff',
+  border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: '50%',
+  width: '40px',
+  height: '40px',
+  fontSize: '24px',
+  cursor: 'pointer',
+  zIndex: 10,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transition: 'background 0.3s',
+  hover: { background: 'rgba(204, 255, 0, 0.4)' }
+});
