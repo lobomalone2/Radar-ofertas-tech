@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
-/**
- * Componente HeroCarousel - O novo topo da Radar.Tech
- * Substitui o carrossel de ofertas por um espaço de banners de alto impacto.
- */
 export default function HeroCarousel() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Lista de banners (Você pode adicionar os links das imagens geradas aqui)
-  const banners = [
+ const banners = [
     {
       id: 1,
       image: 'https://private-us-east-1.manuscdn.com/sessionFile/SAcwbItTS1PkjMEgHlIz74/sandbox/HDLH6DwzEXFG9k3c484DOg_1781969006811_na1fn_L2hvbWUvdWJ1bnR1L2Jhbm5lcl9jYXJvdXNlbF9tb2RlbA.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvU0Fjd2JJdFRTMVBrak1FZ0hsSXo3NC9zYW5kYm94L0hETEg2RHd6RVhGRzlrM2M0ODRET2dfMTc4MTk2OTAwNjgxMV9uYTFmbl9MMmh2YldVdmRXSjFiblIxTDJKaGJtNWxjbDlqWVhKdmRYTmxiRjl0YjJSbGJBLnBuZyIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc5ODc2MTYwMH19fV19&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=mNZ-CiVcsApq-Z2JYcEd32~gjIOQwHYPggmSgktaDCUbS7HM4GMRcP3zQ9OIgj3FYh-tszTs9m0b2sCGD3tiJb4kTlSzzXsoEoVK2Atuc~oY3gsJQDgEp8PsfDXliKwhmV-IFLHj3ZO8MdWBhXJD8Byg8OM2~dtmHnIWN3VmvG1B9i6uWQbXaCQrOcarYd2ghuH4wzxUwPi84kGR8cz6iECLsTFy1RIQmnSb4FOXIQsE2e8wl6Sph8E59QzA-Z7NY0N3mwO8Izk1Wy06Cl4S9Acq64sIN2EADW0k~PaS2Tb2LRdCD5lyxCp45rfoemlCUqkbBafRLSW-rlyYe~t5dQ__', // hero_banner_radar_tech.png
@@ -22,37 +18,36 @@ export default function HeroCarousel() {
       alt: 'Monte seu Setup'
     }
   ];
-
-  // Auto-play
   useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
     }, 5000);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('resize', checkMobile);
+    };
   }, [banners.length]);
 
   return (
     <div style={{
       width: '100%',
       maxWidth: '1280px',
-      margin: '20px auto',
+      margin: isMobile ? '10px auto' : '20px auto',
       position: 'relative',
-      borderRadius: '24px',
+      borderRadius: isMobile ? '12px' : '24px',
       overflow: 'hidden',
-      boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
-      aspectRatio: '21 / 9', // Formato Ultra-wide como os banners gerados
+      aspectRatio: isMobile ? '16 / 9' : '21 / 9', // Formato mais alto no mobile para melhor visibilidade
       background: '#000'
     }}>
-      {/* Slides */}
       {banners.map((banner, index) => (
         <div
           key={banner.id}
           style={{
             position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
+            top: 0, left: 0, width: '100%', height: '100%',
             opacity: currentSlide === index ? 1 : 0,
             transition: 'opacity 0.8s ease-in-out',
             zIndex: currentSlide === index ? 1 : 0,
@@ -61,12 +56,8 @@ export default function HeroCarousel() {
           <a href={banner.link}>
             <img
               src={banner.image}
-              alt={banner.alt}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-              }}
+              alt="Banner"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           </a>
         </div>
@@ -75,40 +66,37 @@ export default function HeroCarousel() {
       {/* Indicadores (Pontinhos) */}
       <div style={{
         position: 'absolute',
-        bottom: '20px',
+        bottom: isMobile ? '10px' : '20px',
         left: '50%',
         transform: 'translateX(-50%)',
         display: 'flex',
-        gap: '10px',
+        gap: '6px',
         zIndex: 10
       }}>
         {banners.map((_, index) => (
-          <button
+          <div
             key={index}
-            onClick={() => setCurrentSlide(index)}
             style={{
-              width: currentSlide === index ? '30px' : '10px',
-              height: '10px',
+              width: currentSlide === index ? (isMobile ? '15px' : '30px') : (isMobile ? '6px' : '10px'),
+              height: isMobile ? '4px' : '10px',
               borderRadius: '5px',
-              border: 'none',
               background: currentSlide === index ? '#CCFF00' : 'rgba(255,255,255,0.3)',
-              cursor: 'pointer',
               transition: 'all 0.3s ease'
             }}
           />
         ))}
       </div>
 
-      {/* Setas de Navegação (Opcional) */}
+      {/* Setas Reduzidas para Mobile */}
       <button 
         onClick={() => setCurrentSlide(currentSlide === 0 ? banners.length - 1 : currentSlide - 1)}
-        style={arrowButtonStyle('left')}
+        style={arrowButtonStyle('left', isMobile)}
       >
         ‹
       </button>
       <button 
         onClick={() => setCurrentSlide(currentSlide === banners.length - 1 ? 0 : currentSlide + 1)}
-        style={arrowButtonStyle('right')}
+        style={arrowButtonStyle('right', isMobile)}
       >
         ›
       </button>
@@ -116,24 +104,24 @@ export default function HeroCarousel() {
   );
 }
 
-const arrowButtonStyle = (side) => ({
+const arrowButtonStyle = (side, isMobile) => ({
   position: 'absolute',
   top: '50%',
-  [side]: '20px',
+  [side]: isMobile ? '8px' : '20px', // Mais perto da borda no mobile
   transform: 'translateY(-50%)',
-  background: 'rgba(0,0,0,0.4)',
+  background: 'rgba(0,0,0,0.3)',
   backdropFilter: 'blur(4px)',
   color: '#fff',
   border: '1px solid rgba(255,255,255,0.1)',
   borderRadius: '50%',
-  width: '40px',
-  height: '40px',
-  fontSize: '24px',
+  width: isMobile ? '28px' : '44px', // Bem menores no mobile
+  height: isMobile ? '28px' : '44px',
+  fontSize: isMobile ? '18px' : '28px',
   cursor: 'pointer',
   zIndex: 10,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  transition: 'background 0.3s',
-  hover: { background: 'rgba(204, 255, 0, 0.4)' }
+  transition: 'all 0.3s',
+  opacity: isMobile ? 0.7 : 1 // Mais discretas no mobile
 });
