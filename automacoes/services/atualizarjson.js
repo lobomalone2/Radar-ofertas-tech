@@ -1,147 +1,150 @@
 const fs = require('fs')
 const { JSDOM } = require('jsdom')
 const arrayNovosLinks = [
-  "https://meli.la/1pZoRLs",
-  "https://meli.la/1pZoRLs",
-  "https://meli.la/1Qcpv5a",
+  "https://meli.la/1DcUBFY",
+  "https://meli.la/26GrU19",
   "https://meli.la/2kd1vyh",
-  "https://meli.la/335cwoR",
-  "https://meli.la/14Uio7S",
-  "https://meli.la/2sXCBqA",
+  "https://meli.la/2xiVmjC",
   "https://meli.la/16jXXoB",
-  "https://meli.la/1UyLj9j",
+  "https://meli.la/2UG4wk7",
   "https://meli.la/1CLrAqd",
-  "https://meli.la/1QK9oho",
-  "https://meli.la/1qUueUr",
-  "https://meli.la/2jKGknr",
-  "https://meli.la/2GTk1EX",
-  "https://meli.la/1uA8Qrm",
-  "https://meli.la/14Mwfsq",
-  "https://meli.la/2nKExhJ",
-  "https://meli.la/2NekPmp",
-  "https://meli.la/2gEm6YS",
-  "https://meli.la/1712G1R",
-  "https://meli.la/1Z85srE",
-  "https://meli.la/1CsPfdG",
-  "https://meli.la/1At3tPg",
+  "https://meli.la/2mMcVG1",
+  "https://meli.la/2BXb3T2",
+  "https://meli.la/2sXCBqA",
+  "https://meli.la/2n1qNXk",
+  "https://meli.la/1KNt5ph",
   "https://meli.la/1dmUAYL",
-  "https://meli.la/2m4scDC",
-  "https://meli.la/19M1Dji",
+  "https://meli.la/2gEm6YS",
+  "https://meli.la/1XThKzQ",
+  "https://meli.la/1712G1R",
+  "https://meli.la/1CsPfdG",
+  "https://meli.la/2LY8zTr",
   "https://meli.la/1YVekEP",
-  "https://meli.la/2hu1Tgj",
-  "https://meli.la/1hhtuiP",
+  "https://meli.la/1Lq8cy2",
+  "https://meli.la/1Grsyy9",
+  "https://meli.la/151JmrF",
+  "https://meli.la/1jsVhoR",
+  "https://meli.la/2TZoZtw",
+  "https://meli.la/1kUvhJa",
+  "https://meli.la/19M1Dji",
+  "https://meli.la/1L6LFNH",
+  "https://meli.la/1N9Qw49",
+  "https://meli.la/2fN8Zdd",
+  "https://meli.la/2YHtrJg",
+  "https://meli.la/1nDfbfV",
+  "https://meli.la/2wBDh6d",
+  "https://meli.la/1YZq19V",
+  "https://meli.la/2FQCZqR",
+  "https://meli.la/2KF5fmh",
+  "https://meli.la/26zXMPo",
+  "https://meli.la/2VgHUmG",
+  "https://meli.la/1Hyw1EM",
+  "https://meli.la/2V2MV7G",
+  "https://meli.la/1V1x254",
+  "https://meli.la/1ojKWWh",
+  "https://meli.la/1RNvTKc",
+  "https://meli.la/26A3Au7",
+  "https://meli.la/2Lm44V2",
+  "https://meli.la/1V1x254",
+  "https://meli.la/2gnLVeD",
+  "https://meli.la/27azJ4k",
+  "https://meli.la/1bzqi3F",
+  "https://meli.la/2bnzqpJ",
+  "https://meli.la/2et19Be",
+  "https://meli.la/1qXRW7t",
+  "https://meli.la/28VMKgu",
+  "https://meli.la/28WjL8L",
+  "https://meli.la/1Xpbnmp",
+  "https://meli.la/2foCBrA",
+  "https://meli.la/2gdbo3Y",
+  "https://meli.la/1BW4kSa",
+  "https://meli.la/2hVW2BU",
+  "https://meli.la/2W6yv2J",
+  "https://meli.la/1c8Cv5X",
+  "https://meli.la/2S7xTPE",
+  "https://meli.la/2UQgD5Q",
+  "https://meli.la/1NVQBgk",
+  "https://meli.la/1nzYxWc",
+  "https://meli.la/1BUkujJ",
+  "https://meli.la/1b1DtSU",
+  "https://meli.la/1EKgjdq",
+  "https://meli.la/2UUB8Zs",
+  "https://meli.la/1RVJsTr",
+  "https://meli.la/2VUn4jx",
+  "https://meli.la/2fZV5xq",
+  "https://meli.la/1UZb7fX",
+  "https://meli.la/2pyoVgG",
+  "https://meli.la/1zV6KFZ",
+  "https://meli.la/1eyLh4i",
+  "https://meli.la/1eyLh4i",
+  "https://meli.la/1KaDBxE",
+  "https://meli.la/2pMjeNk",
+  "https://meli.la/2Fpv2Ap",
+  "https://meli.la/2ojLpjc",
+  "https://meli.la/1gCN8Mf",
+  "https://meli.la/14b6JG3",
+  "https://meli.la/2fQTfUo",
+  "https://meli.la/24LyPvo",
+  "https://meli.la/1d157wK",
+  "https://meli.la/1aUYsoq",
+  "https://meli.la/1b7YMFm",
+  "https://meli.la/28eR3Gu",
+  "https://meli.la/2kHKjCb",
+  "https://meli.la/141VhYm",
+  "https://meli.la/2zAqhKT",
+  "https://meli.la/2FDw7ZE",
+  "https://meli.la/12W9EMA",
+  "https://meli.la/1MhEpQA",
+  "https://meli.la/2ooDwvx",
+  "https://meli.la/2LVNrzM",
+  "https://meli.la/2ckLTVq",
+  "https://meli.la/2sAJwmy",
+  "https://meli.la/1KKbMwv",
+  "https://meli.la/1RFjmdv",
+  "https://meli.la/2wcwp7C",
+  "https://meli.la/2X5JPih",
+  "https://meli.la/1NcjuVe",
+  "https://meli.la/2QkqGtD",
+  "https://meli.la/1Vz1Emi",
+  "https://meli.la/2w7skZe",
+  "https://meli.la/2xqfg5o",
+  "https://meli.la/1ELwnpi",
+  "https://meli.la/17NqjQN",
+  "https://meli.la/2yZsGUS",
+  "https://meli.la/2yZsGUS",
+  "https://meli.la/2HM74YZ",
+  "https://meli.la/2inyZXF",
+  "https://meli.la/1raZXtM",
+  "https://meli.la/1vwSFiQ",
+  "https://meli.la/167Lwss",
+  "https://meli.la/2FEAqxm",
   "https://meli.la/1trhS6M",
   "https://meli.la/1cGuQHj",
-  "https://meli.la/1jhjmL2",
-  "https://meli.la/2fN8Zdd",
-  "https://meli.la/1jEePf5",
-  "https://meli.la/1VvAdbu",
-  "https://meli.la/1MhEpQA",
   "https://meli.la/11W3F7Z",
-  "https://meli.la/1Vz1Emi",
-  "https://meli.la/2Y3FPw3",
+  "https://meli.la/2RsPsWE",
+  "https://meli.la/2vvNreD",
   "https://meli.la/1V9QL1k",
-  "https://meli.la/2VHN1dG",
-  "https://meli.la/1qEq6tE",
-  "https://meli.la/2Nu1Rk2",
-  "https://meli.la/1x4EG9w",
-  "https://meli.la/2Y3FPw3",
-  "https://meli.la/2uVXX7N",
-  "https://meli.la/2d33hrF",
-  "https://meli.la/2KF5fmh",
-  "https://meli.la/21eURV2",
+  "https://meli.la/2wQ89NS",
   "https://meli.la/2EMe6Qd",
-  "https://meli.la/15ifpdU",
-  "https://meli.la/141VhYm",
+  "https://meli.la/2Afxdkk",
+  "https://meli.la/2WQYF9a",
+  "https://meli.la/1yuLM6Y",
+  "https://meli.la/2iHeFvW",
+  "https://meli.la/1dr7e4v",
+  "https://meli.la/21eURV2",
+  "https://meli.la/1KxTfc1",
+  "https://meli.la/2Xu1tsy",
+  "https://meli.la/2eDyUNg",
   "https://meli.la/1ZfWgjS",
-  "https://meli.la/18FkD9r",
-  "https://meli.la/2wSP9fN",
-  "https://meli.la/1w6jAYk",
-  "https://meli.la/2WyDnp1",
-  "https://meli.la/2wBDh6d",
-  "https://meli.la/2QE7Pds",
-  "https://meli.la/2n3LY2E",
-  "https://meli.la/2FQCZqR",
-  "https://meli.la/2X5JPih",
-  "https://meli.la/2a26JRs",
-  "https://meli.la/2Jh1bNF",
-  "https://meli.la/2CETcb7",
-  "https://meli.la/2w7skZe",
-  "https://meli.la/1y1Fez2",
-  "https://meli.la/1ip9GFN",
-  "https://meli.la/26A3Au7",
-  "https://meli.la/1RFjmdv",
-  "https://meli.la/2PLnV9a",
-  "https://meli.la/2bUDE2x",
-  "https://meli.la/1nKZ59e",
-  "https://meli.la/2fZV5xq",
-  "https://meli.la/1vwSFiQ",
-  "https://meli.la/2bUDE2x",
-  "https://meli.la/1ELwnpi",
-  "https://meli.la/1BUkujJ",
-  "https://meli.la/1ChnVA3",
+  "https://meli.la/2Nu1Rk2",
+  "https://meli.la/1hHRDrf",
+  "https://meli.la/2jq6od7",
+  "https://meli.la/13mEnG9",
+  "https://meli.la/2m4scDC",
+  "https://meli.la/2zD1Kya",
   "https://meli.la/196YRhy",
-  "https://meli.la/2W3CdYQ",
-  "https://meli.la/1sY5XSt",
-  "https://meli.la/2N1Pkmf",
-  "https://meli.la/2gdbo3Y",
-  "https://meli.la/1V1x254",
-  "https://meli.la/1thb2uf",
-  "https://meli.la/1EZEdCw",
-  "https://meli.la/1raZXtM",
-  "https://meli.la/1V1x254",
-  "https://meli.la/1YGQa6S",
-  "https://meli.la/1kTTcBP",
-  "https://meli.la/1DzmtcF",
-  "https://meli.la/2VgHUmG",
-  "https://meli.la/14PdAEH",
-  "https://meli.la/1ojKWWh",
-  "https://meli.la/1b6kugM",
-  "https://meli.la/2bnzqpJ",
-  "https://meli.la/2zPeZNk",
-  "https://meli.la/2a6cfzd",
-  "https://meli.la/2zPeZNk",
-  "https://meli.la/23kmn1S",
-  "https://meli.la/2Z25X6F",
-  "https://meli.la/167Lwss",
-  "https://meli.la/1kULJf7",
-  "https://meli.la/2kY5Qz5",
-  "https://meli.la/1RNvTKc",
-  "https://meli.la/22B1uSy",
-  "https://meli.la/2H6ZfuF",
-  "https://meli.la/17ikZpt",
-  "https://meli.la/1j8CQme",
-  "https://meli.la/2Bh4ptk",
-  "https://meli.la/266Mx4b",
-  "https://meli.la/1SUo33d",
-  "https://meli.la/1MHTDWY",
-  "https://meli.la/2FJrwsB",
-  "https://meli.la/2URjExj",
-  "https://meli.la/2Fpv2Ap",
-  "https://meli.la/1SgMwah",
-  "https://meli.la/2rKYUAE",
-  "https://meli.la/2xTA8yu",
-  "https://meli.la/1zV6KFZ",
-  "https://meli.la/1ec1goD",
-  "https://meli.la/1rfmWot",
-  "https://meli.la/2q4SwQf",
-  "https://meli.la/1ec1goD",
-  "https://meli.la/2CYx6Ei",
-  "https://meli.la/14x6Hq5",
-  "https://meli.la/2hswAtY",
-  "https://meli.la/11bjqDU",
-  "https://meli.la/2vCwsfs",
-  "https://meli.la/1orZcAy",
-  "https://meli.la/1MFF8Pq",
-  "https://meli.la/2VVJD8o",
-  "https://meli.la/2gAirwb",
-  "https://meli.la/1ZrHQQW",
-  "https://meli.la/1ZrHQQW",
-  "https://meli.la/1eyLh4i",
-  "https://meli.la/1eyLh4i",
-  "https://meli.la/23d66Jy",
-  "https://meli.la/28WjL8L"
-]
+  "https://meli.la/2n3LY2E"
+];
 
 function exportarLinksParaConversao(arquivoOrigem, arquivoDestino, arquivoTxt) {
     try {
@@ -188,64 +191,121 @@ function limparTexto(texto) {
 }
 
 async function atualizarListaTemporaria(arquivoTemporario, listaLinks) {
-    try {
-        const dadosBrutos = fs.readFileSync(arquivoTemporario, 'utf-8')
-        const listaTemp = JSON.parse(dadosBrutos)
 
-        console.log(`⏳ Analisando ${listaLinks.length} links via conferência de título...`)
-        let atualizados = 0
+try {
 
-        for (const linkEncurtado of listaLinks) {
-            if (!linkEncurtado.startsWith('http')) continue
+const dadosBrutos = fs.readFileSync(arquivoTemporario, 'utf-8')
 
-            try {
-                const resposta = await fetch(linkEncurtado, {
-                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-                })
+const listaTemp = JSON.parse(dadosBrutos)
 
-                const html = await resposta.text()
-                const dom = new JSDOM(html)
-                const documento = dom.window.document
 
-                // Busca cirúrgica usando a classe exata do título do Mercado Livre (.ui-pdp-title)
-                const elementoTitulo = documento.querySelector('.ui-pdp-title, h1.ui-pdp-title, .poly-component__title')
-                
-                if (elementoTitulo) {
-                    const tituloPagina = elementoTitulo.textContent.trim()
-                    const tituloPaginaLimpo = limparTexto(tituloPagina)
 
-                    // Procura no seu JSON o produto que tem o título correspondente
-                    const produto = listaTemp.find(p => {
-                        if (!p.titulo) return false
-                        const tituloJsonLimpo = limparTexto(p.titulo)
-                        
-                        return tituloJsonLimpo.includes(tituloPaginaLimpo) || 
-                               tituloPaginaLimpo.includes(tituloJsonLimpo)
-                    })
+console.log(`⏳ Analisando ${listaLinks.length} links via conferência de título...`)
 
-                    if (produto) {
-                        produto.link = linkEncurtado 
-                        atualizados++
-                        console.log(`✅ Produto localizado: "${produto.titulo}" -> Link salvo!`)
-                    } else {
-                        console.log(`⚠️ Título encontrado ["${tituloPagina}"], mas não bateu com nenhum item do JSON.`);
-                    }
-                } else {
-                    console.log(`❌ Não foi possível encontrar a tag .ui-pdp-title na página para o link: ${linkEncurtado}`)
-                }
+let atualizados = 0
 
-            } catch (erroLink) {
-                console.error(`❌ Erro ao processar o link ${linkEncurtado}:`, erroLink.message)
-            }
-        }
 
-        fs.writeFileSync(arquivoTemporario, JSON.stringify(listaTemp, null, 2), 'utf-8')
-        console.log(`\n📦 Processo concluído! ${atualizados} de ${listaLinks.length} produtos atualizados.`);
 
-    } catch (erro) {
-        console.error('❌ Erro geral:', erro.message)
-    }
+for (const linkEncurtado of listaLinks) {
+
+if (!linkEncurtado.startsWith('http')) continue
+
+
+
+try {
+
+const resposta = await fetch(linkEncurtado, {
+
+headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+
+})
+
+
+
+const html = await resposta.text()
+
+const dom = new JSDOM(html)
+
+const documento = dom.window.document
+
+
+
+// Busca cirúrgica usando a classe exata do título do Mercado Livre (.ui-pdp-title)
+
+const elementoTitulo = documento.querySelector('.ui-pdp-title, h1.ui-pdp-title, .poly-component__title')
+
+
+if (elementoTitulo) {
+
+const tituloPagina = elementoTitulo.textContent.trim()
+
+const tituloPaginaLimpo = limparTexto(tituloPagina)
+
+
+
+// Procura no seu JSON o produto que tem o título correspondente
+
+const produto = listaTemp.find(p => {
+
+if (!p.titulo) return false
+
+const tituloJsonLimpo = limparTexto(p.titulo)
+
+
+return tituloJsonLimpo.includes(tituloPaginaLimpo) ||
+
+tituloPaginaLimpo.includes(tituloJsonLimpo)
+
+})
+
+
+
+if (produto) {
+
+produto.link = linkEncurtado
+
+atualizados++
+
+console.log(`✅ Produto localizado: "${produto.titulo}" -> Link salvo!`)
+
+} else {
+
+console.log(`⚠️ Título encontrado ["${tituloPagina}"], mas não bateu com nenhum item do JSON.`);
+
 }
+
+} else {
+
+console.log(`❌ Não foi possível encontrar a tag .ui-pdp-title na página para o link: ${linkEncurtado}`)
+
+}
+
+
+
+} catch (erroLink) {
+
+console.error(`❌ Erro ao processar o link ${linkEncurtado}:`, erroLink.message)
+
+}
+
+}
+
+
+
+fs.writeFileSync(arquivoTemporario, JSON.stringify(listaTemp, null, 2), 'utf-8')
+
+console.log(`\n📦 Processo concluído! ${atualizados} de ${listaLinks.length} produtos atualizados.`);
+
+
+
+} catch (erro) {
+
+console.error('❌ Erro geral:', erro.message)
+
+}
+
+}
+
 
 
 
@@ -287,7 +347,6 @@ function aplicarLinksConvertidos(arquivoPrincipal, arquivoEditado) {
 // exportarLinksParaConversao('ofertas_mercadolivre.json', 'para_converter.json', 'links_para_gerar.txt')
 
 // atualizarListaTemporaria('para_converter.json',arrayNovosLinks)
-
 
 
 aplicarLinksConvertidos('ofertas_mercadolivre.json', 'para_converter.json');
