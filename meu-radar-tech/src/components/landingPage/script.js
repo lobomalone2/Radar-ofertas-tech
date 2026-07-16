@@ -1,5 +1,5 @@
 const LINK_GRUPO = "https://chat.whatsapp.com/KRUPdha04CWGBZ454CL7b9"; // ← troque aqui
-const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/d/YOUR_DEPLOYMENT_ID/exec"; // ← SUBSTITUA COM SUA URL DO GOOGLE APPS SCRIPT
+const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbws-nEgQE_n0ZEeF4xlax-U4uOYynrIez75rqvGrt_tNePEAu5vdMSmALHSuFpN9Lb2/exec"; // ← SUBSTITUA COM SUA URL DO GOOGLE APPS SCRIPT
 
 const overlay    = document.getElementById('overlay');
 const form       = document.getElementById('capture-form');
