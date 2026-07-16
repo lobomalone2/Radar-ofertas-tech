@@ -13,15 +13,15 @@ from webdriver_manager.chrome import ChromeDriverManager
 # ============================================================
 # CONFIG
 # ============================================================
-NOME_GRUPO       = "Radar de Ofertas TECH"
+NOME_GRUPO       = "Radar Tech VIP"
 LINK_SITE        = "https://www.radarofertastech.app.br/"
 CAMINHO_JSON     = "ofertas_mercadolivre.json"
 
-LIMITE_DIARIO    = 20
-TAMANHO_LOTE     = 4
+LIMITE_DIARIO    = 12
+TAMANHO_LOTE     = 2
 DELAY_ENTRE_MSG  = 8
 
-HORARIOS_DISPARO = ["08:00", "11:00", "18:00", "22:00"]
+HORARIOS_DISPARO = ["06:00", "12:20", "18:00", "22:00"]
 
 # Controle de IDs já enviados hoje — evita repetição mesmo com random
 _enviados_hoje: set = set()
@@ -42,6 +42,8 @@ _estado = {
 SELETORES_BUSCA = [
     "//div[@contenteditable='true'][@data-tab='3']",
     "//input[@id='_r_a_']",
+
+
     "//input[@type='text' and contains(@class, 'html-input')]"
 ]
 
@@ -132,7 +134,7 @@ def digitar(driver, el, texto: str):
     time.sleep(0.3)
 
 # ============================================================
-# OFERTAS — lógica de seleção aleatória com controle de repetição
+# OFERTAS — lógica simplificada de rotação diária
 # ============================================================
 
 def carregar_ofertas(caminho: str) -> list:
@@ -143,69 +145,25 @@ def carregar_ofertas(caminho: str) -> list:
 
 def filtrar_e_ordenar(ofertas: list) -> list:
     """
-    Estratégia de seleção com aleatoriedade controlada:
-
-    1. Divide as ofertas em dois grupos:
-       - TOP: as 40% com maior desconto (produtos mais quentes, maior chance de aparecer)
-       - RESTO: os demais (rotacionam pra não ficar sempre os mesmos)
-
-    2. Sorteia aleatoriamente combinando os dois grupos:
-       - 60% das vagas para o TOP (garante qualidade)
-       - 40% das vagas para o RESTO (garante variedade)
-
-    3. Remove IDs já enviados hoje (evita repetição no mesmo dia)
-
-    4. Embaralha a ordem final — assim mesmo os tops aparecem
-       em posições diferentes a cada lote.
-
-    Resultado: a cada execução a fila é diferente, sem nunca
-    repetir um produto no mesmo dia, mas priorizando os melhores.
+    Apenas remove os IDs enviados hoje e embaralha a lista,
+    limitando o resultado ao LIMITE_DIARIO de ofertas.
     """
     global _enviados_hoje
 
-    # Filtra hot=True se existir o campo, senão usa todos
-    tem_hot = any("hot" in o for o in ofertas)
-    candidatos = [o for o in ofertas if o.get("hot", True)] if tem_hot else ofertas[:]
-
-    # Remove os já enviados hoje
-    candidatos = [o for o in candidatos if o.get("id") not in _enviados_hoje]
+    candidatos = [o for o in ofertas if o.get("id") not in _enviados_hoje]
 
     if not candidatos:
-        # Todos já foram enviados — reseta o histórico do dia e usa todos
         log("🔄 Todos os produtos já foram exibidos hoje. Reiniciando histórico de rotação.")
         _enviados_hoje.clear()
-        candidatos = [o for o in ofertas if o.get("hot", True)] if tem_hot else ofertas[:]
+        candidatos = ofertas[:]
 
-    # Ordena por desconto para separar top e resto
-    candidatos_ordenados = sorted(
-        candidatos,
-        key=lambda o: o.get("desconto", 0),
-        reverse=True
-    )
+    # Embaralha os produtos disponíveis de forma simples
+    random.shuffle(candidatos)
 
-    total = len(candidatos_ordenados)
-    corte = max(1, int(total * 0.4))  # top 40%
+    # Seleciona as ofertas respeitando o limite diário configurado
+    fila = candidatos[:LIMITE_DIARIO]
 
-    grupo_top   = candidatos_ordenados[:corte]
-    grupo_resto = candidatos_ordenados[corte:]
-
-    # Calcula quantas vagas para cada grupo dentro do LIMITE_DIARIO
-    vagas_top   = min(len(grupo_top),   int(LIMITE_DIARIO * 0.6))
-    vagas_resto = min(len(grupo_resto), LIMITE_DIARIO - vagas_top)
-
-    # Sorteia aleatoriamente dentro de cada grupo
-    selecionados_top   = random.sample(grupo_top,   vagas_top)
-    selecionados_resto = random.sample(grupo_resto, vagas_resto) if grupo_resto else []
-
-    # Junta e embaralha a ordem final
-    fila = selecionados_top + selecionados_resto
-    random.shuffle(fila)
-
-    log(
-        f"🎲 Fila do dia: {len(fila)} ofertas "
-        f"({vagas_top} top + {vagas_resto} variedade) | "
-        f"já enviados hoje: {len(_enviados_hoje)}"
-    )
+    log(f"🎲 Fila do dia gerada: {len(fila)} ofertas prontas para envio | já enviados hoje: {len(_enviados_hoje)}")
     return fila
 
 
@@ -247,7 +205,7 @@ def formatar_msg(oferta: dict) -> str:
     orig   = oferta.get("precoOriginal", "")
     preco_linha = ""
     if preco and desc:
-        preco_linha = f"\n💰 De R$ {orig} por *R$ {preco}*  ➡️  {desc}% OFF 🔥"
+        preco_linha = f"\n💰 De R$ {orig} por *R$ {preco}* ➡️  {desc}% OFF 🔥"
     elif preco:
         preco_linha = f"\n💰 *R$ {preco}*"
     return (
@@ -435,9 +393,6 @@ def main():
     for h in HORARIOS_DISPARO:
         schedule.every().day.at(h).do(executar_lote)
         log(f"📅 Agendado: {h}")
-
-    log("🧪 Disparando lote inicial...")
-    executar_lote()
 
     while True:
         schedule.run_pending()

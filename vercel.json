@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/landingpage",
+      "destination": "https://radar-ofertas-tech-n87s.vercel.app/"
+    },
+    {
+      "source": "/landingpage/:path*",
+      "destination": "https://radar-ofertas-tech-n87s.vercel.app/:path*"
+    }
+  ]
+}
