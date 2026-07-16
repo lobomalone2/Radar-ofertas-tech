@@ -45,6 +45,9 @@ if (form) {
     e.preventDefault();
     if (!validar()) return;
 
+    // Remove o foco de qualquer input ativo para fechar o teclado do celular imediatamente
+    document.activeElement.blur();
+
     submitBtn.classList.add('loading');
     submitBtn.disabled = true;
 
@@ -62,25 +65,20 @@ if (form) {
       headers: {
         'Content-Type': 'application/json'
       },
-      mode: 'no-cors' // Google Apps Script Web App frequentemente requer no-cors para POST simples
+      mode: 'no-cors'
     })
     .then(() => {
-      // Como usamos no-cors, não conseguimos ler a resposta JSON, 
-      // mas o navegador considera sucesso se a requisição for enviada.
       console.log('Dados enviados (modo no-cors)');
       
-      // Salvar no localStorage também (backup local)
       localStorage.setItem('radar_lead', JSON.stringify({
         ...formData,
         ts: new Date().toISOString()
       }));
 
-      // Prosseguir com o fluxo de sucesso
       finalizarFluxo();
     })
     .catch(error => {
       console.error('Erro ao enviar dados:', error);
-      // Mesmo com erro, permitir acesso (fallback)
       finalizarFluxo();
     });
   });
@@ -91,7 +89,18 @@ function finalizarFluxo() {
     overlay.classList.add('hiding');
     setTimeout(() => {
       overlay.style.display = 'none';
+      
+      // Remove classes ou estilos restritivos no body/html que possam travar o mobile
+      document.body.style.overflow = 'auto';
+      document.body.style.position = 'static';
+      document.documentElement.style.overflow = 'auto';
+      
+      // Ativa o conteúdo principal
       mainContent.classList.add('unlocked');
+      
+      // Força o navegador do celular a recalcular o scroll
+      window.scrollTo(0, 0);
+      
       setTimeout(() => {
         notif.classList.add('show');
         setTimeout(() => notif.classList.remove('show'), 4000);
@@ -111,7 +120,6 @@ function finalizarFluxo() {
   }
 });
 
-// Focar no primeiro campo ao carregar
-setTimeout(() => {
-  if (nomeInput) nomeInput.focus();
-}, 300);
+/* REMOVIDO O FOCO AUTOMÁTICO PARA EVITAR QUE O TECLADO DO CELULAR
+  ABRA SOZINHO E TRAVE A POSIÇÃO DA TELA DO DISPOSITIVO
+*/
