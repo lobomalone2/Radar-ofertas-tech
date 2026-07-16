@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radar Tech — Ofertas Imperdíveis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="glow-orb"></div>
+
+  <div id="main-content">
+    <div class="content-wrap">
+      <div class="badge"><span class="badge-dot"></span>Grupo ativo agora</div>
+      <h1 class="headline">Os melhores achados<br>de eletrônicos com<br><em>até 80% OFF</em></h1>
+      <p class="subline">Garimpamos as ofertas mais quentes do Mercado Livre todos os dias. <strong>Só entra quem sabe que tempo é dinheiro.</strong></p>
+      <div class="stats">
+        <div class="stat"><div class="stat-num">+12k</div><div class="stat-label">Membros</div></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><div class="stat-num">Diário</div><div class="stat-label">Novas ofertas</div></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><div class="stat-num">R$0</div><div class="stat-label">Acesso grátis</div></div>
+      </div>
+      <a id="cta-btn" href="#" class="cta-btn" target="_blank" rel="noopener">
+        Entrar no grupo agora
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <p class="cta-note">100% gratuito · Sem spam · Saia quando quiser</p>
+    </div>
+  </div>
+
+  <div id="overlay">
+    <div class="popup" role="dialog" aria-modal="true" aria-labelledby="popup-title">
+      <div class="popup-bar"></div>
+      <div class="popup-icon">⚡</div>
+      <h2 id="popup-title">Acesso ao grupo de ofertas</h2>
+      <p>Preencha os dados abaixo para liberar o acesso. <strong>Leva menos de 10 segundos.</strong></p>
+
+      <form id="capture-form" novalidate>
+        <div class="form-row">
+          <div class="field">
+            <label for="nome">Nome</label>
+            <input type="text" id="nome" placeholder="Ex: Lucas" autocomplete="given-name">
+            <span class="error-msg" id="nome-error"></span>
+          </div>
+          <div class="field">
+            <label for="sobrenome">Sobrenome</label>
+            <input type="text" id="sobrenome" placeholder="Ex: Silva" autocomplete="family-name">
+            <span class="error-msg" id="sobrenome-error"></span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field full">
+            <label for="email">E-mail</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              <input type="email" id="email" placeholder="seu@email.com" autocomplete="email">
+            </div>
+            <span class="error-msg" id="email-error"></span>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submit-btn">
+          <span class="btn-text">Liberar acesso →</span>
+          <div class="spinner"></div>
+        </button>
+      </form>
+
+      <p class="privacy-note">🔒 Seus dados ficam só com a gente. Sem spam, prometido.</p>
+    </div>
+  </div>
+
+  <div class="notif" id="notif">
+    <span class="notif-icon">🔥</span>
+    <div class="notif-text"><strong>Nova oferta adicionada</strong>Galaxy S25 — 47% OFF</div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import json, os, time, tempfile, threading, requests, schedule, subprocess
+import json, os, time, tempfile, threading, requests, schedule, subprocess, random
 from datetime import datetime, date
 from pathlib import Path
 from selenium import webdriver
@@ -21,7 +21,10 @@ LIMITE_DIARIO    = 20
 TAMANHO_LOTE     = 4
 DELAY_ENTRE_MSG  = 8
 
-HORARIOS_DISPARO = ["08:00", "11:00", "14:00", "17:00", "20:00"]
+HORARIOS_DISPARO = ["08:00", "11:00", "18:00", "22:00"]
+
+# Controle de IDs já enviados hoje — evita repetição mesmo com random
+_enviados_hoje: set = set()
 
 _estado = {
     "data_atual":    None,
@@ -33,7 +36,7 @@ _estado = {
 }
 
 # ============================================================
-# SELETORES — Corrigidos para formato XPath puro
+# SELETORES
 # ============================================================
 
 SELETORES_BUSCA = [
@@ -52,13 +55,13 @@ SELETORES_CARD_GRUPO = [
     f'//span[@title="{NOME_GRUPO}"]',
     f'//span[contains(@title, "{NOME_GRUPO[:10]}")]'
 ]
+
 SELETORES_MSG = [
     '//div[@data-testid="conversation-compose-box-input"]//p',
     '//footer//div[@contenteditable="true"]',
     '//div[@contenteditable="true"][@data-tab="10"]'
 ]
 
-# O botão de enviar que você validou no console F12!
 SELETORES_ENVIAR_MSG = [
     '//button[@aria-label="Enviar"]',
     '//button[@data-tab="11"]',
@@ -82,8 +85,13 @@ SELETORES_CARREGADO = [
     "//button[@aria-label='Conversas']"
 ]
 
+# ============================================================
+# UTILIDADES
+# ============================================================
+
 def log(msg: str):
     print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] {msg}", flush=True)
+
 
 def achar(driver, seletores: list, timeout: int = 10):
     fim = time.time() + timeout
@@ -98,10 +106,12 @@ def achar(driver, seletores: list, timeout: int = 10):
         time.sleep(0.4)
     raise TimeoutException(f"Nenhum seletor encontrado em {timeout}s")
 
+
 def clicar(driver, seletores: list, timeout: int = 10):
     el = achar(driver, seletores, timeout)
     driver.execute_script("arguments[0].click();", el)
     return el
+
 
 def digitar(driver, el, texto: str):
     linhas = texto.split("\n")
@@ -121,19 +131,94 @@ def digitar(driver, el, texto: str):
             el.send_keys(Keys.SHIFT + Keys.ENTER)
     time.sleep(0.3)
 
+# ============================================================
+# OFERTAS — lógica de seleção aleatória com controle de repetição
+# ============================================================
+
 def carregar_ofertas(caminho: str) -> list:
     with open(caminho, "r", encoding="utf-8") as f:
         d = json.load(f)
     return [d] if isinstance(d, dict) else d
 
+
 def filtrar_e_ordenar(ofertas: list) -> list:
-    # Ajustado para lidar com o JSON simplificado se necessário
-    return ofertas[:LIMITE_DIARIO]
+    """
+    Estratégia de seleção com aleatoriedade controlada:
+
+    1. Divide as ofertas em dois grupos:
+       - TOP: as 40% com maior desconto (produtos mais quentes, maior chance de aparecer)
+       - RESTO: os demais (rotacionam pra não ficar sempre os mesmos)
+
+    2. Sorteia aleatoriamente combinando os dois grupos:
+       - 60% das vagas para o TOP (garante qualidade)
+       - 40% das vagas para o RESTO (garante variedade)
+
+    3. Remove IDs já enviados hoje (evita repetição no mesmo dia)
+
+    4. Embaralha a ordem final — assim mesmo os tops aparecem
+       em posições diferentes a cada lote.
+
+    Resultado: a cada execução a fila é diferente, sem nunca
+    repetir um produto no mesmo dia, mas priorizando os melhores.
+    """
+    global _enviados_hoje
+
+    # Filtra hot=True se existir o campo, senão usa todos
+    tem_hot = any("hot" in o for o in ofertas)
+    candidatos = [o for o in ofertas if o.get("hot", True)] if tem_hot else ofertas[:]
+
+    # Remove os já enviados hoje
+    candidatos = [o for o in candidatos if o.get("id") not in _enviados_hoje]
+
+    if not candidatos:
+        # Todos já foram enviados — reseta o histórico do dia e usa todos
+        log("🔄 Todos os produtos já foram exibidos hoje. Reiniciando histórico de rotação.")
+        _enviados_hoje.clear()
+        candidatos = [o for o in ofertas if o.get("hot", True)] if tem_hot else ofertas[:]
+
+    # Ordena por desconto para separar top e resto
+    candidatos_ordenados = sorted(
+        candidatos,
+        key=lambda o: o.get("desconto", 0),
+        reverse=True
+    )
+
+    total = len(candidatos_ordenados)
+    corte = max(1, int(total * 0.4))  # top 40%
+
+    grupo_top   = candidatos_ordenados[:corte]
+    grupo_resto = candidatos_ordenados[corte:]
+
+    # Calcula quantas vagas para cada grupo dentro do LIMITE_DIARIO
+    vagas_top   = min(len(grupo_top),   int(LIMITE_DIARIO * 0.6))
+    vagas_resto = min(len(grupo_resto), LIMITE_DIARIO - vagas_top)
+
+    # Sorteia aleatoriamente dentro de cada grupo
+    selecionados_top   = random.sample(grupo_top,   vagas_top)
+    selecionados_resto = random.sample(grupo_resto, vagas_resto) if grupo_resto else []
+
+    # Junta e embaralha a ordem final
+    fila = selecionados_top + selecionados_resto
+    random.shuffle(fila)
+
+    log(
+        f"🎲 Fila do dia: {len(fila)} ofertas "
+        f"({vagas_top} top + {vagas_resto} variedade) | "
+        f"já enviados hoje: {len(_enviados_hoje)}"
+    )
+    return fila
+
 
 def resetar_estado_diario():
+    global _enviados_hoje
+
     p = Path(CAMINHO_JSON)
     if not p.exists():
         log(f"❌ JSON não encontrado: {p}"); return
+
+    # Reseta o set de enviados ao virar o dia
+    _enviados_hoje = set()
+
     fila = filtrar_e_ordenar(carregar_ofertas(str(p)))
     _estado.update({
         "data_atual":    date.today(),
@@ -141,7 +226,8 @@ def resetar_estado_diario():
         "indice_fila":   0,
         "fila_do_dia":   fila,
     })
-    log(f"🗓️  Fila resetada — {len(fila)} oferta(s) para hoje.")
+    log(f"🗓️  Estado resetado para {date.today()} — {len(fila)} oferta(s) na fila.")
+
 
 def proximo_lote() -> list:
     fila   = _estado["fila_do_dia"]
@@ -152,27 +238,6 @@ def proximo_lote() -> list:
     fim = min(inicio + TAMANHO_LOTE, len(fila), inicio + restam)
     return fila[inicio:fim]
 
-def baixar_foto(url: str, pasta: str):
-    try:
-        r = requests.get(url, timeout=15)
-        r.raise_for_status()
-        from PIL import Image
-        import io
-        imagem = Image.open(io.BytesIO(r.content))
-        if imagem.mode in ("RGBA", "P", "LA"):
-            fundo = Image.new("RGB", imagem.size, (255, 255, 255))
-            if imagem.mode == "P":
-                imagem = imagem.convert("RGBA")
-            fundo.paste(imagem, mask=imagem.split()[-1] if imagem.mode in ("RGBA", "LA") else None)
-            imagem = fundo
-        elif imagem.mode != "RGB":
-            imagem = imagem.convert("RGB")
-        caminho_jpg = os.path.join(pasta, "foto.jpg")
-        imagem.save(caminho_jpg, "JPEG", quality=92)
-        return caminho_jpg
-    except Exception as e:
-        log(f"  ⚠️  Foto: {e}")
-        return None
 
 def formatar_msg(oferta: dict) -> str:
     titulo = oferta.get("titulo", "Produto")
@@ -185,7 +250,16 @@ def formatar_msg(oferta: dict) -> str:
         preco_linha = f"\n💰 De R$ {orig} por *R$ {preco}*  ➡️  {desc}% OFF 🔥"
     elif preco:
         preco_linha = f"\n💰 *R$ {preco}*"
-    return f"*{titulo}*{preco_linha}\n\n🛒 *ACHADO TECH NO MERCADO LIVRE!!*\n\n🔗 {link}\n\n👉 Veja mais em: {LINK_SITE}"
+    return (
+        f"*{titulo}*{preco_linha}\n\n"
+        f"🛒 *ACHADO TECH NO MERCADO LIVRE!!*\n\n"
+        f"🔗 {link}\n\n"
+        f"👉 Veja mais em: {LINK_SITE}"
+    )
+
+# ============================================================
+# SELENIUM — WhatsApp Web
+# ============================================================
 
 def abrir_grupo(driver):
     log(f"🔍 Buscando grupo: '{NOME_GRUPO}'")
@@ -200,25 +274,27 @@ def abrir_grupo(driver):
         time.sleep(0.05)
     time.sleep(1.0)
     campo.send_keys(Keys.ENTER)
-    time.sleep(4.0) 
+    time.sleep(4.0)
     try:
         clicar(driver, SELETORES_CARD_GRUPO, timeout=10)
         log("✅ Grupo aberto com sucesso!")
     except TimeoutException:
-        primeiro_resultado = driver.find_element(By.XPATH, '//div[@id="pane-side"]//div[@data-testid="cell-frame-container"]')
-        driver.execute_script("arguments[0].click();", primeiro_resultado)
+        primeiro = driver.find_element(
+            By.XPATH,
+            '//div[@id="pane-side"]//div[@data-testid="cell-frame-container"]'
+        )
+        driver.execute_script("arguments[0].click();", primeiro)
         log("✅ Grupo aberto via clique forçado!")
     time.sleep(2.0)
 
+
 def arrastar_e_soltar_arquivo(driver, campo_destino, caminho_arquivo):
-    """Simula o comportamento de arrastar e soltar um arquivo dentro do chat."""
     js_drop_file = """
         var target = arguments[0];
         var offsetX = arguments[1];
         var offsetY = arguments[2];
         var document = target.ownerDocument || document;
         var window = document.defaultView || window;
-
         var input = document.createElement('input');
         input.type = 'file';
         input.style.display = 'none';
@@ -236,124 +312,110 @@ def arrastar_e_soltar_arquivo(driver, campo_destino, caminho_arquivo):
         document.body.appendChild(input);
         return input;
     """
-    input_temporario = driver.execute_script(js_drop_file, campo_destino, 0, 0)
-    input_temporario.send_keys(os.path.abspath(caminho_arquivo))
+    input_temp = driver.execute_script(js_drop_file, campo_destino, 0, 0)
+    input_temp.send_keys(os.path.abspath(caminho_arquivo))
+
 
 def enviar_foto_com_legenda(driver, caminho_foto, legenda):
     try:
-        # 1. Localiza a área principal do chat para soltar a imagem
         container_chat = achar(driver, SELETORES_MSG, timeout=15)
         log("📌 [foto] Área de chat localizada. Iniciando Drag & Drop simulado...")
-        
-        # Executa o drop simulado do arquivo JPG
         arrastar_e_soltar_arquivo(driver, container_chat, caminho_foto)
-        log("📁 Arquivo 'soltado' no chat com sucesso. Aguardando processamento da preview...")
-        
-        # 2. Aguarda a janela de preview de mídia abrir monitorando o campo de legenda
+        log("📁 Arquivo soltado no chat. Aguardando preview...")
         campo_legenda = achar(driver, SELETORES_LEGENDA, timeout=15)
-        
-        # 3. Digita a legenda de forma segura dentro da preview
-        log("📝 Digitando legenda na preview de mídia...")
+        log("📝 Digitando legenda na preview...")
         driver.execute_script("arguments[0].focus();", campo_legenda)
         time.sleep(0.5)
         digitar(driver, campo_legenda, legenda)
         time.sleep(1.5)
-        
-        # 4. Clica no botão verde de enviar da tela de mídia
         log("🚀 Localizando botão de envio da foto...")
         clicar(driver, SELETORES_ENVIAR_FOTO, timeout=15)
-        log("✅ Foto e oferta enviadas com sucesso!")
-        
-        # Tempo de estabilização pós-envio
+        log("✅ Foto e oferta enviadas!")
         time.sleep(4.0)
     except Exception as e:
-        log(f"❌ Erro no fluxo de envio de foto: {e}")
-        # Envia um ESC para limpar a tela caso tenha ficado preso na preview
+        log(f"❌ Erro no envio de foto: {e}")
         try:
             driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.ESCAPE)
         except:
             pass
         raise e
 
+
 def enviar_texto(driver, texto: str):
-    # 1. Localiza o campo onde escrevemos a mensagem
     campo = achar(driver, SELETORES_MSG, timeout=15)
     driver.execute_script("arguments[0].click();", campo)
     driver.execute_script("arguments[0].focus();", campo)
     time.sleep(0.5)
-    
-    # 2. Injeta o texto estruturado no chat
     log("📝 Digitando o corpo do anúncio...")
     digitar(driver, campo, texto)
-    
-    # 3. Pausa estratégica para o WhatsApp Web carregar o preview do link (Metadados + Foto)
-    log("⏳ Aguardando 15 segundos para o WhatsApp renderizar o preview da foto do link...")
+    log("⏳ Aguardando 15s para o WhatsApp renderizar o preview do link...")
     time.sleep(15.0)
-    
-    # 4. Localiza e clica no botão de Enviar mapeado no F12
-    log("🚀 Clicando no botão Enviar do chat...")
+    log("🚀 Clicando no botão Enviar...")
     try:
         clicar(driver, SELETORES_ENVIAR_MSG, timeout=10)
-        log("✅ Mensagem e preview enviados com sucesso!")
+        log("✅ Mensagem enviada!")
     except TimeoutException:
-        log("⚠️ Botão de clique não respondeu. Tentando enviar via comando de teclado ENTER...")
+        log("⚠️ Botão não encontrado. Enviando via ENTER...")
         campo.send_keys(Keys.ENTER)
-        log("✅ Mensagem enviada via tecla ENTER!")
-        
+        log("✅ Mensagem enviada via ENTER!")
     time.sleep(3.0)
+
 
 def publicar_oferta(driver, oferta: dict, pasta_temp: str):
     titulo = oferta.get("titulo", "Produto")
-    log(f"  📦 Preparando envio de texto: {titulo[:55]}...")
-
-    # 1. Gera a mensagem formatada com emojis, preços e o link do Mercado Livre
+    log(f"  📦 Enviando: {titulo[:55]}...")
     msg = formatar_msg(oferta)
-    
-    # 2. Envia diretamente para o chat normal usando os seletores validados
     enviar_texto(driver, msg)
 
+# ============================================================
+# AGENDAMENTO
+# ============================================================
+
 def executar_lote():
+    global _enviados_hoje
 
     if _estado["data_atual"] != date.today():
+        log("🌅 Novo dia — resetando estado.")
         resetar_estado_diario()
-        
+
     with _estado["lock"]:
         lote = proximo_lote()
-        if not lote: 
+        if not lote:
+            log("📭 Fila vazia ou limite atingido.")
             return
-            
-        log(f"🚀 Horário de disparo atingido! Iniciando lote de {len(lote)} ofertas...")
+
+        log(f"🚀 Disparando lote de {len(lote)} ofertas...")
         driver = _estado["driver"]
-        
+
         try:
-            # 1. Atualiza a página para limpar o cache e descongelar o WhatsApp Web
-            log("🔄 Reiniciando a aba do WhatsApp para evitar travamentos (F5)...")
+            log("🔄 Recarregando WhatsApp Web...")
             driver.refresh()
-            
-            # 2. Aguarda a interface do WhatsApp voltar a ficar totalmente pronta
-            log("⏳ Aguardando recarregamento completo pós-refresh...")
             achar(driver, SELETORES_CARREGADO, timeout=90)
-            time.sleep(5.0) # Margem de segurança para estabilizar o DOM
-            
-            # 3. Agora sim, busca e abre o grupo de ofertas
+            time.sleep(5.0)
             abrir_grupo(driver)
-            
         except Exception as e:
-            log(f"❌ Erro ao preparar o navegador ou abrir o grupo: {e}")
+            log(f"❌ Erro ao preparar navegador: {e}")
             return
-            
-        # 4. Processa o envio do lote de texto
+
         with tempfile.TemporaryDirectory() as pasta:
             for i, oferta in enumerate(lote):
                 try:
                     publicar_oferta(driver, oferta, pasta)
                     _estado["enviadas_hoje"] += 1
                     _estado["indice_fila"]   += 1
+                    # Registra o ID como enviado para não repetir hoje
+                    _enviados_hoje.add(oferta.get("id"))
                 except Exception as e:
-                    log(f"   ❌ Erro na oferta: {e}")
-                    
-                if i < len(lote) - 1: 
+                    log(f"   ❌ Erro na oferta {oferta.get('id','?')}: {e}")
+
+                if i < len(lote) - 1:
                     time.sleep(DELAY_ENTRE_MSG)
+
+        log(f"✅ Lote concluído | enviadas hoje: {_estado['enviadas_hoje']}/{LIMITE_DIARIO}")
+
+# ============================================================
+# MAIN
+# ============================================================
 
 def main():
     resetar_estado_diario()
@@ -362,21 +424,25 @@ def main():
     op.add_argument(f"--user-data-dir={perfil}")
     op.add_argument("--no-sandbox")
     op.add_argument("--disable-dev-shm-usage")
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=op)
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install()), options=op
+    )
     _estado["driver"] = driver
     driver.get("https://web.whatsapp.com")
-    log("⏳ Aguardando QR Code...")
+    log("⏳ Aguardando QR Code / carregamento...")
     achar(driver, SELETORES_CARREGADO, timeout=120)
-    
+
     for h in HORARIOS_DISPARO:
         schedule.every().day.at(h).do(executar_lote)
-    
+        log(f"📅 Agendado: {h}")
+
     log("🧪 Disparando lote inicial...")
     executar_lote()
 
     while True:
         schedule.run_pending()
         time.sleep(30)
+
 
 if __name__ == "__main__":
     main()

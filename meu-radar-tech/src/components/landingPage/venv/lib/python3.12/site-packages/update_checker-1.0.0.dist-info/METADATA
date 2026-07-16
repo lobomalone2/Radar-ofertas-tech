@@ -1,0 +1,86 @@
+Metadata-Version: 2.4
+Name: update_checker
+Version: 1.0.0
+Summary: A python module that will check for package updates.
+Author: Bryce Boe
+Author-email: Bryce Boe <bbzbryce@gmail.com>
+License-Expression: BSD-2-Clause
+License-File: LICENSE.txt
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Topic :: Software Development
+Classifier: Typing :: Typed
+Requires-Dist: aiohttp ; extra == 'async'
+Requires-Python: >=3.10
+Project-URL: Changelog, https://github.com/bboe/update_checker/blob/main/CHANGELOG.md
+Project-URL: Homepage, https://github.com/bboe/update_checker
+Project-URL: Issues, https://github.com/bboe/update_checker/issues
+Project-URL: Source, https://github.com/bboe/update_checker
+Provides-Extra: async
+Description-Content-Type: text/markdown
+
+[![CI](https://github.com/bboe/update_checker/actions/workflows/ci.yml/badge.svg)](https://github.com/bboe/update_checker/actions/workflows/ci.yml)
+
+# update_checker
+
+A python module that will check for package updates.
+
+Only whitelisted packages can be checked for updates. Contact update_checker's
+author for information on adding a package to the whitelist.
+
+### Installation
+
+The update_checker module can be installed via:
+
+    uv add update_checker
+
+### Usage
+
+To simply output when there is a newer version of the `praw` package, you can
+use the following bit of code:
+
+```python
+from update_checker import update_check
+
+update_check("praw", "0.0.1")
+```
+
+If you need more control, such as performing operations conditionally when
+there is an update you can use the following approach:
+
+```python
+from update_checker import UpdateChecker
+
+checker = UpdateChecker()
+result = checker.check(package_name="praw", package_version="0.0.1")
+if result:  # result is None when an update was not found or a failure occured
+    # result is a UpdateResult object that contains the following attributes:
+    # * available_version
+    # * package_name
+    # * running_version
+    # * release_date (is None if the information isn't available)
+    print(result)
+    # Conditionally perform other actions
+```
+
+### Async usage
+
+Install the `async` extra (`uv add "update_checker[async]"`) and use the
+async counterparts:
+
+```python
+from update_checker import UpdateChecker, async_update_check
+
+await async_update_check(package_name="praw", package_version="0.0.1")
+
+checker = UpdateChecker()
+result = await checker.async_check(package_name="praw", package_version="0.0.1")
+```

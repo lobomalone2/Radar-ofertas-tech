@@ -1,0 +1,212 @@
+"""Provide the RedditorListingMixin class."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from urllib.parse import urljoin
+
+from praw.models.listing.generator import ListingGenerator
+from praw.models.listing.mixins.base import BaseListingMixin
+from praw.util.cache import cachedproperty
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from typing_extensions import Unpack
+
+    import praw
+    from praw import models
+    from praw.models.listing.generator import ListingGeneratorKwargs
+
+
+class RedditorListingMixin(BaseListingMixin):
+    """Adds additional methods pertaining to :class:`.Redditor` instances."""
+
+    @cachedproperty
+    def comments(self) -> SubListing:
+        r"""Provide an instance of :class:`.SubListing` for comment access.
+
+        For example, to output the first line of all new comments by u/spez try:
+
+        .. code-block:: python
+
+            for comment in reddit.redditor("spez").comments.new(limit=None):
+                print(comment.body.split("\\n", 1)[0][:79])
+
+        """
+        return SubListing(self._reddit, self._path, "comments")
+
+    @cachedproperty
+    def overview(self) -> SubListing:
+        r"""Provide an instance of :class:`.SubListing` for overview access.
+
+        The overview combines a Redditor's comments and submissions, mirroring the user
+        overview page on Reddit.
+
+        .. note::
+
+            This is the same listing produced by calling a sort method directly on the
+            :class:`.Redditor` instance, so ``reddit.redditor("spez").overview.new()``
+            and ``reddit.redditor("spez").new()`` yield the same items. Use
+            :attr:`.comments` or :attr:`.submissions` to restrict the listing to a
+            single type.
+
+        For example, to output the first line of all top items by u/spez try:
+
+        .. code-block:: python
+
+            for item in reddit.redditor("spez").overview.top(time_filter="all"):
+                print(str(item)[:79])
+
+        """
+        return SubListing(self._reddit, self._path, "overview")
+
+    @cachedproperty
+    def submissions(self) -> SubListing:
+        """Provide an instance of :class:`.SubListing` for submission access.
+
+        For example, to output the title's of top 100 of all time submissions for u/spez
+        try:
+
+        .. code-block:: python
+
+            for submission in reddit.redditor("spez").submissions.top(time_filter="all"):
+                print(submission.title)
+
+        """
+        return SubListing(self._reddit, self._path, "submitted")
+
+    def downvoted(
+        self, **generator_kwargs: Unpack[ListingGeneratorKwargs]
+    ) -> Iterator[models.Comment | models.Submission]:
+        """Return a :class:`.ListingGenerator` for items the user has downvoted.
+
+        :returns: A :class:`.ListingGenerator` object which yields :class:`.Comment` or
+            :class:`.Submission` objects the user has downvoted.
+
+        :raises: ``prawcore.Forbidden`` if the user is not authorized to access the
+            list.
+
+            .. note::
+
+                Since this function returns a :class:`.ListingGenerator` the exception
+                may not occur until sometime after this function has returned.
+
+
+        Additional keyword arguments are passed in the initialization of
+        :class:`.ListingGenerator`.
+
+        For example, to get all downvoted items of the authenticated user:
+
+        .. code-block:: python
+
+            for item in reddit.user.me().downvoted():
+                print(item.id)
+
+        """
+        return ListingGenerator(self._reddit, urljoin(self._path, "downvoted"), **generator_kwargs)
+
+    def hidden(
+        self, **generator_kwargs: Unpack[ListingGeneratorKwargs]
+    ) -> Iterator[models.Comment | models.Submission]:
+        """Return a :class:`.ListingGenerator` for items the user has hidden.
+
+        :returns: A :class:`.ListingGenerator` object which yields :class:`.Comment` or
+            :class:`.Submission` objects the user has hid.
+
+        :raises: ``prawcore.Forbidden`` if the user is not authorized to access the
+            list.
+
+            .. note::
+
+                Since this function returns a :class:`.ListingGenerator` the exception
+                may not occur until sometime after this function has returned.
+
+
+        Additional keyword arguments are passed in the initialization of
+        :class:`.ListingGenerator`.
+
+        For example, to get all hidden items of the authenticated user:
+
+        .. code-block:: python
+
+            for item in reddit.user.me().hidden():
+                print(item.id)
+
+        """
+        return ListingGenerator(self._reddit, urljoin(self._path, "hidden"), **generator_kwargs)
+
+    def saved(self, **generator_kwargs: Unpack[ListingGeneratorKwargs]) -> Iterator[models.Comment | models.Submission]:
+        """Return a :class:`.ListingGenerator` for items the user has saved.
+
+        :returns: A :class:`.ListingGenerator` object which yields :class:`.Comment` or
+            :class:`.Submission` objects the user has saved.
+
+        :raises: ``prawcore.Forbidden`` if the user is not authorized to access the
+            list.
+
+            .. note::
+
+                Since this function returns a :class:`.ListingGenerator` the exception
+                may not occur until sometime after this function has returned.
+
+
+        Additional keyword arguments are passed in the initialization of
+        :class:`.ListingGenerator`.
+
+        For example, to get all saved items of the authenticated user:
+
+        .. code-block:: python
+
+            for item in reddit.user.me().saved(limit=None):
+                print(item.id)
+
+        """
+        return ListingGenerator(self._reddit, urljoin(self._path, "saved"), **generator_kwargs)
+
+    def upvoted(
+        self, **generator_kwargs: Unpack[ListingGeneratorKwargs]
+    ) -> Iterator[models.Comment | models.Submission]:
+        """Return a :class:`.ListingGenerator` for items the user has upvoted.
+
+        :returns: A :class:`.ListingGenerator` object which yields :class:`.Comment` or
+            :class:`.Submission` objects the user has upvoted.
+
+        :raises: ``prawcore.Forbidden`` if the user is not authorized to access the
+            list.
+
+            .. note::
+
+                Since this function returns a :class:`.ListingGenerator` the exception
+                may not occur until sometime after this function has returned.
+
+
+        Additional keyword arguments are passed in the initialization of
+        :class:`.ListingGenerator`.
+
+        For example, to get all upvoted items of the authenticated user:
+
+        .. code-block:: python
+
+            for item in reddit.user.me().upvoted():
+                print(item.id)
+
+        """
+        return ListingGenerator(self._reddit, urljoin(self._path, "upvoted"), **generator_kwargs)
+
+
+class SubListing(BaseListingMixin):
+    """Helper class for generating :class:`.ListingGenerator` objects."""
+
+    def __init__(self, reddit: praw.Reddit, base_path: str, subpath: str) -> None:
+        """Initialize a :class:`.SubListing` instance.
+
+        :param reddit: An instance of :class:`.Reddit`.
+        :param base_path: The path to the object up to this point.
+        :param subpath: The additional path to this sublisting.
+
+        """
+        super().__init__(reddit, _data=None)
+        self._listing_use_sort = True
+        self._reddit = reddit
+        self._path = urljoin(base_path, subpath)
