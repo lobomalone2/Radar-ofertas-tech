@@ -16,12 +16,17 @@
   --danger: #ff4757;
 }
 
+html, body {
+  min-height: 100%;
+  /* Permite o scroll nativo e suave no mobile */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 body { 
   font-family: 'Inter', sans-serif; 
   background: var(--bg); 
   color: var(--text); 
-  min-height: 100vh; 
-  /* Removido o overflow: hidden para permitir o scroll */
 }
 
 .grid-bg { 
@@ -31,6 +36,7 @@ body {
   background-size: 48px 48px; 
   opacity: 0.35; 
   z-index: 0; 
+  pointer-events: none; /* Garante que o fundo não roube o toque */
 }
 
 .glow-orb { 
@@ -46,6 +52,7 @@ body {
   pointer-events: none; 
 }
 
+/* O conteúdo principal do site */
 #main-content { 
   min-height: 100vh; 
   display: flex; 
@@ -56,14 +63,17 @@ body {
   text-align: center; 
   filter: blur(12px); 
   transition: filter 0.6s ease; 
+  
+  /* Bloqueia cliques e toques enquanto o popup estiver ativo */
   pointer-events: none; 
   user-select: none; 
   position: relative; 
 }
 
+/* Quando o popup sumir e a classe unlocked for adicionada */
 #main-content.unlocked { 
   filter: none; 
-  pointer-events: all; 
+  pointer-events: auto !important; /* Força a liberação de toques no celular */
   user-select: auto; 
 }
 
@@ -201,6 +211,7 @@ body {
   color: var(--muted); 
 }
 
+/* Overlay do Popup */
 #overlay { 
   position: fixed; 
   inset: 0; 
@@ -212,6 +223,8 @@ body {
   justify-content: center; 
   padding: 1.5rem; 
   transition: opacity 0.4s ease; 
+  /* Permite o touch na área do formulário */
+  pointer-events: auto; 
 }
 
 #overlay.hiding { 
@@ -228,6 +241,7 @@ body {
   width: 100%; 
   position: relative; 
   animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); 
+  z-index: 101;
 }
 
 @keyframes popIn { 
