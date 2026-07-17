@@ -4,6 +4,7 @@ import json
 import re
 
 def get_mercadolivre_deals(category_id, category_name, affiliate_tag):
+    
     base_url = "https://www.mercadolivre.com.br/ofertas"
     params = {
         "promotion_type": "LIGHTNING_DEAL",
@@ -36,6 +37,8 @@ def get_mercadolivre_deals(category_id, category_name, affiliate_tag):
 
             # 1. Tenta encontrar o preço riscado (Original)
             del_element = card.find('del', class_='andes-money-amount')
+
+
             if del_element:
                 orig_fraction = del_element.find('span', class_='andes-money-amount__fraction')
                 if orig_fraction:
@@ -43,7 +46,9 @@ def get_mercadolivre_deals(category_id, category_name, affiliate_tag):
 
             # 2. Tenta encontrar o preço atual (Promocional)
             price_containers = card.find_all('span', class_='andes-money-amount')
+
             for container in price_containers:
+
                 if not container.find_parent('del'):
                     curr_fraction = container.find('span', class_='andes-money-amount__fraction')
                     if curr_fraction:
@@ -101,9 +106,22 @@ def main():
     AFFILIATE_TAG = "cdbfghaec46766"
     
     categories = {
-        "MLB1648": "Informatica",
-        "MLB1051": "Celulares",
-        "MLB1000": "Eletronicos"
+        "MLB439527": "Informatica",
+        "MLB438578": "Acessórios Consoles",
+        "MLB1648": "Componentes PC",
+        "MLB4887": "Audio e Video",
+        "MLB271740": "Drones e Acessórios",
+        "MLB99889": "Tablets e Acessórios",
+        "MLB1649": "Computadores",
+        "MLB1144": "Video Games",
+        "MLB186456": "Jogos Midia Fisica",
+        "MLB1051": "Acessórios-Celulares",
+        "MLB1731": "Softwares",
+        "MLB3377": "Acessórios para Notebooks",
+        "MLB1000": "SmartTVs",
+        "MLB1051": "SmartPhones",
+        "MLB3813": "Acessórios para Celulares"
+
     }
 
     all_deals = []

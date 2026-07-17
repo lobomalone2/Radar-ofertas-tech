@@ -17,11 +17,11 @@ NOME_GRUPO       = "Radar Tech VIP"
 LINK_SITE        = "https://www.radarofertastech.app.br/"
 CAMINHO_JSON     = "ofertas_mercadolivre.json"
 
-LIMITE_DIARIO    = 12
-TAMANHO_LOTE     = 2
+LIMITE_DIARIO    = 15
+TAMANHO_LOTE     = 3
 DELAY_ENTRE_MSG  = 8
 
-HORARIOS_DISPARO = ["06:00", "12:20", "18:00", "22:00"]
+HORARIOS_DISPARO = ["06:00", "12:20", "18:05", "22:00"]
 
 # Controle de IDs já enviados hoje — evita repetição mesmo com random
 _enviados_hoje: set = set()
@@ -143,28 +143,21 @@ def carregar_ofertas(caminho: str) -> list:
     return [d] if isinstance(d, dict) else d
 
 
+import random
+
 def filtrar_e_ordenar(ofertas: list) -> list:
+
     """
-    Apenas remove os IDs enviados hoje e embaralha a lista,
-    limitando o resultado ao LIMITE_DIARIO de ofertas.
+    Apenas embaralha a lista completa de ofertas recebida,
+    sem aplicar filtros, limites ou histórico de envios.
     """
-    global _enviados_hoje
-
-    candidatos = [o for o in ofertas if o.get("id") not in _enviados_hoje]
-
-    if not candidatos:
-        log("🔄 Todos os produtos já foram exibidos hoje. Reiniciando histórico de rotação.")
-        _enviados_hoje.clear()
-        candidatos = ofertas[:]
-
-    # Embaralha os produtos disponíveis de forma simples
+    # Cria uma cópia para evitar alterar a lista original fora da função
+    candidatos = ofertas[:]
+    
+    # Embaralha os produtos de forma aleatória
     random.shuffle(candidatos)
-
-    # Seleciona as ofertas respeitando o limite diário configurado
-    fila = candidatos[:LIMITE_DIARIO]
-
-    log(f"🎲 Fila do dia gerada: {len(fila)} ofertas prontas para envio | já enviados hoje: {len(_enviados_hoje)}")
-    return fila
+    
+    return candidatos
 
 
 def resetar_estado_diario():
@@ -337,12 +330,16 @@ def executar_lote():
         resetar_estado_diario()
 
     with _estado["lock"]:
-        lote = proximo_lote()
-        if not lote:
+        # 1. Obtém o lote original de ofertas
+        lote_original = proximo_lote()
+        if not lote_original:
             log("📭 Fila vazia ou limite atingido.")
             return
 
-        log(f"🚀 Disparando lote de {len(lote)} ofertas...")
+        # 2. Embaralha o lote usando a sua nova função
+        lote = filtrar_e_ordenar(lote_original)
+
+        log(f"🚀 Disparando lote de {len(lote)} ofertas (embaralhadas)...")
         driver = _estado["driver"]
 
         try:
