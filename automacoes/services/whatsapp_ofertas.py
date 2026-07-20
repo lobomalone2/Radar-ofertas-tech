@@ -9,6 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
+import random
 
 # ============================================================
 # CONFIG
@@ -21,7 +22,7 @@ LIMITE_DIARIO    = 15
 TAMANHO_LOTE     = 3
 DELAY_ENTRE_MSG  = 8
 
-HORARIOS_DISPARO = ["06:00", "12:20", "18:05", "22:00"]
+HORARIOS_DISPARO = ["10:52", "12:20", "18:05", "22:00"]
 
 # Controle de IDs já enviados hoje — evita repetição mesmo com random
 _enviados_hoje: set = set()
@@ -143,20 +144,32 @@ def carregar_ofertas(caminho: str) -> list:
     return [d] if isinstance(d, dict) else d
 
 
-import random
+
+
+
 
 def filtrar_e_ordenar(ofertas: list) -> list:
+    """
+    Filtra uma lista de dicionários (JSON) mantendo apenas os itens 
+    cujo link começa com 'meli' e embaralha o resultado.
+    """
+    candidatos = []
 
-    """
-    Apenas embaralha a lista completa de ofertas recebida,
-    sem aplicar filtros, limites ou histórico de envios.
-    """
-    # Cria uma cópia para evitar alterar a lista original fora da função
-    candidatos = ofertas[:]
-    
-    # Embaralha os produtos de forma aleatória
+    for oferta in ofertas:
+        # Tenta pegar a URL do JSON pelas chaves mais comuns.
+        # Caso a chave do seu JSON seja diferente (ex: 'link_oferta'), mude abaixo:
+        link = oferta.get('link') or oferta.get('url') or oferta.get('link_afiliado') or ""
+        
+        # Converte para string, remove espaços e coloca em minúsculas
+        link_limpo = str(link).strip().lower()
+
+        # Garante que o link comece com meli (com ou sem http/https)
+        if link_limpo.startswith(('meli.', 'https://meli', 'http://meli')):
+            candidatos.append(oferta)
+
+    # Embaralha o JSON filtrado
     random.shuffle(candidatos)
-    
+
     return candidatos
 
 

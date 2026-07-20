@@ -1,18 +1,20 @@
 import { useState, useEffect, useMemo } from 'react'
 import OfferCard from './components/OfferCard'
-import HotBanner from './components/hotBanner' // Importa o novo componente
+import HotBanner from './components/hotBanner'
+import CategoryMenu from './components/CategoryMenu'
 import { OFFERS as FAKE_OFFERS } from './data/offers'
 
 const API = 'https://underpay-uptake-native.ngrok-free.dev';
 
 export default function App() {
-  const [offers,    setOffers]    = useState([])
-  const [loading,   setLoading]   = useState(true)
-  const [categoria, setCategoria] = useState('Todos')
-  const [busca,     setBusca]     = useState('')
-  const [modo,      setModo]      = useState('')
+  const [offers,     setOffers]     = useState([])
+  const [loading,    setLoading]    = useState(true)
+  const [categoria,  setCategoria]  = useState('Todos')
+  const [busca,      setBusca]      = useState('')
+  const [modo,       setModo]       = useState('')
+  const [menuAberto, setMenuAberto] = useState(false) // Controle global do menu lateral
 
- useEffect(() => {
+  useEffect(() => {
     const carregarOfertas = async () => {
       try {
         const response = await fetch(`${API}/api/relampago`, {
@@ -26,19 +28,15 @@ export default function App() {
 
         const json = await response.json()
 
-        console.log("O QUE VEIO DA API VIA NGROK:", json)
-
         if (!json.data || json.data.length === 0) throw new Error('Sem dados')
 
         setOffers(json.data)
         setModo('api')
 
       } catch (err) {
-
         console.warn('Backend indisponível, usando dados demo:', err.message)
         setOffers(FAKE_OFFERS)
         setModo('demo')
-
       } finally {
         setLoading(false)
       }
@@ -47,7 +45,9 @@ export default function App() {
     carregarOfertas()
   }, [])
 
-  const categorias = ['Todos', ...new Set(offers.map(o => o.categoria))]
+  const categorias = useMemo(() => {
+    return ['Todos', ...new Set(offers.map(o => o.categoria).filter(Boolean))]
+  }, [offers])
 
   const filtrados = useMemo(() =>
     offers.filter(o => {
@@ -62,15 +62,35 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#05070a' }}>
 
-      {/* Header */}
+      {/* HEADER FIXO GLOBAL */}
       <header style={{
         borderBottom: '1px solid rgba(255,255,255,0.07)',
-        padding: '0 2rem', height: 56,
+        padding: '0 1.5rem', height: 56,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         position: 'sticky', top: 0,
-        background: 'rgba(15,15,15,0.95)', backdropFilter: 'blur(8px)', zIndex: 10,
+        background: 'rgba(15,15,15,0.95)', backdropFilter: 'blur(8px)', zIndex: 30,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          
+          {/* BOTÃO HAMBÚRGUER (Abre a gaveta em qualquer lugar do site) */}
+          <button
+            onClick={() => setMenuAberto(true)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              padding: 4,
+              color: '#f0f0f0'
+            }}
+            aria-label="Abrir Menu de Categorias"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+            </svg>
+          </button>
+
           <span style={{
             fontFamily: 'var(--font-mono)', fontSize: 13,
             fontWeight: 500, letterSpacing: '0.06em', color: '#f0f0f0',
@@ -78,7 +98,6 @@ export default function App() {
             MEU RADAR<span style={{ color: '#e8ff57' }}>.</span>TECH
           </span>
 
-          {/* indicador de modo — discreto, só para dev */}
           {modo === 'demo' && (
             <span style={{
               fontSize: 9, fontFamily: 'var(--font-mono)',
@@ -121,36 +140,39 @@ export default function App() {
         </div>
       </header>
 
-      <main style={{ maxWidth: 1280, margin: '0 auto', padding: '2rem' }}>
+      {/* GAVETA DE CATEGORIAS (Sobrepõe toda a tela com z-index elevado) */}
+      <CategoryMenu
+        categorias={categorias}
+        categoria={categoria}
+        setCategoria={setCategoria}
+        isOpen={menuAberto}
+        setIsOpen={setMenuAberto}
+        totalProdutos={filtrados.length}
+      />
 
-        {/* Filtros */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: '2rem' }}>
-          {categorias.map(cat => (
-            <button key={cat} onClick={() => setCategoria(cat)} style={{
-              padding: '6px 14px', borderRadius: 20, border: '1px solid',
-              cursor: 'pointer', transition: 'all 0.15s',
-              fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.06em',
-              borderColor: categoria === cat
-                ? 'rgba(232,255,87,0.5)' : 'rgba(255,255,255,0.08)',
-              background: categoria === cat
-                ? 'rgba(232,255,87,0.08)' : 'transparent',
-              color: categoria === cat ? '#e8ff57' : '#6b6b6b',
-            }}>
-              {cat}
-            </button>
-          ))}
-          <span style={{
-            marginLeft: 'auto', fontFamily: 'var(--font-mono)',
-            fontSize: 11, color: '#4a4a4a', alignSelf: 'center',
-          }}>
+      <main style={{ maxWidth: 1280, margin: '0 auto', padding: '2rem 1.5rem' }}>
+
+        {/* Status da Categoria Ativa / Indicador no topo da página */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justify: 'space-between',
+          marginBottom: '1.5rem',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 12,
+        }}>
+          <div style={{ color: '#6b6b6b' }}>
+            CATEGORIA: <span style={{ color: '#e8ff57', fontWeight: 600 }}>{categoria.toUpperCase()}</span>
+          </div>
+          <div style={{ color: '#4a4a4a', fontSize: 11 }}>
             {filtrados.length} produto{filtrados.length !== 1 ? 's' : ''}
-          </span>
+          </div>
         </div>
 
-        {/* Hot Banner - Carrossel de Ofertas Mais Quentes */}
+        {/* Hot Banner */}
         {!loading && <HotBanner offers={offers} />}
 
-        {/* Grid */}
+        {/* Grid de Ofertas */}
         {loading ? (
           <div style={{
             textAlign: 'center', padding: '5rem 0',
