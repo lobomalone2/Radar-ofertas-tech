@@ -18,8 +18,8 @@ NOME_GRUPO       = "Radar Tech VIP"
 LINK_SITE        = "https://www.radarofertastech.app.br/"
 CAMINHO_JSON     = "ofertas_mercadolivre.json"
 
-LIMITE_DIARIO    = 15
-TAMANHO_LOTE     = 3
+LIMITE_DIARIO    = 20
+TAMANHO_LOTE     = 4
 DELAY_ENTRE_MSG  = 8
 
 HORARIOS_DISPARO = ["10:52", "12:20", "18:05", "22:00"]
@@ -142,9 +142,6 @@ def carregar_ofertas(caminho: str) -> list:
     with open(caminho, "r", encoding="utf-8") as f:
         d = json.load(f)
     return [d] if isinstance(d, dict) else d
-
-
-
 
 
 
@@ -399,6 +396,7 @@ def main():
     driver.get("https://web.whatsapp.com")
     log("⏳ Aguardando QR Code / carregamento...")
     achar(driver, SELETORES_CARREGADO, timeout=120)
+    # executar_lote()  # Executa imediatamente ao iniciar
 
     for h in HORARIOS_DISPARO:
         schedule.every().day.at(h).do(executar_lote)

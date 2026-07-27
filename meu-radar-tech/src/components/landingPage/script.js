@@ -5,3 +5,9 @@ const ctaBtn = document.getElementById('cta-btn');
 if (ctaBtn) {
   ctaBtn.href = LINK_GRUPO;
 }
+
+document.getElementById('cta-btn').addEventListener('click', function(e) {
+    if (typeof fbq === 'function') {
+      fbq('track', 'Lead');
+    }
+  });
