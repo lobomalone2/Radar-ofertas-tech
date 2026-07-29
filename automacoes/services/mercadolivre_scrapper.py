@@ -106,21 +106,13 @@ def main():
     AFFILIATE_TAG = "cdbfghaec46766"
     
     categories = {
-        "MLB439527": "Informatica",
-        "MLB438578": "Acessórios Consoles",
-        "MLB1648": "Componentes PC",
-        "MLB4887": "Audio e Video",
-        "MLB271740": "Drones e Acessórios",
-        "MLB99889": "Tablets e Acessórios",
-        "MLB1649": "Computadores",
-        "MLB1144": "Video Games",
-        "MLB186456": "Jogos Midia Fisica",
-        "MLB1051": "Acessórios-Celulares",
-        "MLB1731": "Softwares",
-        "MLB3377": "Acessórios para Notebooks",
-        "MLB1000": "SmartTVs",
-        "MLB1051": "SmartPhones",
-        "MLB3813": "Acessórios para Celulares"
+        "MLB23262": "Calçados",
+        "MLB273770": "Sandálias e Chinelos",
+        "MLB779362-1": "Tenis",
+        "MLB275574": "Sapatilhas",
+        "MLB31447": "Roupas",
+        "MLB270215": "Moda Fitness",
+        "MLB779362": "Camisetas e Regatas"
 
     }
 

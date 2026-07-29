@@ -14,15 +14,15 @@ import random
 # ============================================================
 # CONFIG
 # ============================================================
-NOME_GRUPO       = "Radar Tech VIP"
+NOME_GRUPO       = "Garimpos Originais"
 LINK_SITE        = "https://www.radarofertastech.app.br/"
 CAMINHO_JSON     = "ofertas_mercadolivre.json"
 
-LIMITE_DIARIO    = 20
+LIMITE_DIARIO    = 30
 TAMANHO_LOTE     = 4
 DELAY_ENTRE_MSG  = 8
 
-HORARIOS_DISPARO = ["10:52", "12:20", "18:05", "22:00"]
+HORARIOS_DISPARO = ["06:00", "08:00", "11:00", "13:00", "15:00", "17:00", "19:00", "21:00"]
 
 # Controle de IDs já enviados hoje — evita repetição mesmo com random
 _enviados_hoje: set = set()
@@ -215,7 +215,7 @@ def formatar_msg(oferta: dict) -> str:
         f"*{titulo}*{preco_linha}\n\n"
         f"🛒 *ACHADO TECH NO MERCADO LIVRE!!*\n\n"
         f"🔗 {link}\n\n"
-        f"👉 Veja mais em: {LINK_SITE}"
+        # f"👉 Veja mais em: {LINK_SITE}"
     )
 
 # ============================================================
@@ -401,6 +401,7 @@ def main():
     for h in HORARIOS_DISPARO:
         schedule.every().day.at(h).do(executar_lote)
         log(f"📅 Agendado: {h}")
+        
 
     while True:
         schedule.run_pending()
