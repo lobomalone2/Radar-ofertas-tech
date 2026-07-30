@@ -5,12 +5,12 @@
 }
 
 :root {
-  --bg: #0a0a0f; 
-  --surface: #111118; 
-  --border: #2a2a38;
-  --accent: #00e5a0; 
-  --text: #f0f0f5; 
-  --muted: #8888aa; 
+  --bg: #000000; 
+  --surface: #111111; 
+  --border: #222222;
+  --accent: #FF5500; /* Laranja da Águia */
+  --text: #FFFFFF; 
+  --muted: #888888; 
 }
 
 html, body {
@@ -25,30 +25,8 @@ body {
   color: var(--text); 
 }
 
-.grid-bg { 
-  position: fixed; 
-  inset: 0; 
-  background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); 
-  background-size: 48px 48px; 
-  opacity: 0.35; 
-  z-index: 0; 
-  pointer-events: none; 
-}
+/* Removido o grid e o glow orb. Fundo limpo e sóbrio. */
 
-.glow-orb { 
-  position: fixed; 
-  width: 600px; 
-  height: 600px; 
-  border-radius: 50%; 
-  background: radial-gradient(circle, rgba(0,229,160,0.12) 0%, transparent 70%); 
-  top: 50%; 
-  left: 50%; 
-  transform: translate(-50%, -50%); 
-  z-index: 0; 
-  pointer-events: none; 
-}
-
-/* Conteúdo principal limpo e 100% liberado para cliques */
 #main-content { 
   min-height: 100vh; 
   display: flex; 
@@ -59,28 +37,30 @@ body {
   text-align: center; 
   position: relative; 
   z-index: 1;
+  /* Borda sutil para simular o layout de loja */
+  border-top: 4px solid var(--accent); 
 }
 
 .content-wrap { 
   position: relative; 
   z-index: 1; 
-  max-width: 680px; 
+  max-width: 720px; 
 }
 
 .badge { 
   display: inline-flex; 
   align-items: center; 
-  gap: 6px; 
-  background: rgba(0,229,160,0.1); 
-  border: 1px solid rgba(0,229,160,0.3); 
-  color: var(--accent); 
-  font-size: 0.75rem; 
-  font-weight: 600; 
-  letter-spacing: 0.08em; 
+  gap: 8px; 
+  background: var(--surface); 
+  border: 1px solid var(--border); 
+  color: var(--text); 
+  font-size: 0.7rem; 
+  font-weight: 700; 
+  letter-spacing: 0.1em; 
   text-transform: uppercase; 
-  padding: 6px 14px; 
-  border-radius: 100px; 
-  margin-bottom: 1.5rem; 
+  padding: 8px 16px; 
+  border-radius: 0; /* Sem bordas arredondadas */
+  margin-bottom: 2rem; 
 }
 
 .badge-dot { 
@@ -97,36 +77,40 @@ body {
 }
 
 .headline { 
-  font-family: 'Syne', sans-serif; 
-  font-size: clamp(2.4rem, 6vw, 4rem); 
-  font-weight: 800; 
-  line-height: 1.05; 
-  letter-spacing: -0.02em; 
-  margin-bottom: 1.25rem; 
+  font-family: 'Anton', sans-serif; 
+  font-size: clamp(3rem, 9vw, 5.5rem); 
+  font-weight: 400; /* Anton já é ultra grossa */
+  line-height: 0.95; 
+  letter-spacing: 0.01em; 
+  margin-bottom: 1.5rem; 
+  text-transform: uppercase;
 }
 
 .headline em { 
   font-style: normal; 
   color: var(--accent); 
+  position: relative;
 }
 
 .subline { 
   font-size: 1.1rem; 
   color: var(--muted); 
   line-height: 1.65; 
-  max-width: 520px; 
-  margin: 0 auto 2.5rem; 
+  max-width: 540px; 
+  margin: 0 auto 3rem; 
+  font-weight: 400;
 }
 
 .subline strong { 
   color: var(--text); 
+  font-weight: 600;
 }
 
 .stats { 
   display: flex; 
-  gap: 2rem; 
+  gap: 2.5rem; 
   justify-content: center; 
-  margin-bottom: 2.5rem; 
+  margin-bottom: 3rem; 
   flex-wrap: wrap; 
 }
 
@@ -135,24 +119,25 @@ body {
 }
 
 .stat-num { 
-  font-family: 'Syne', sans-serif; 
-  font-size: 1.8rem; 
-  font-weight: 800; 
-  color: var(--accent); 
+  font-family: 'Anton', sans-serif; 
+  font-size: 2.2rem; 
+  color: var(--text); 
   line-height: 1; 
+  letter-spacing: 0.02em;
 }
 
 .stat-label { 
   font-size: 0.75rem; 
   color: var(--muted); 
   text-transform: uppercase; 
-  letter-spacing: 0.06em; 
-  margin-top: 4px; 
+  letter-spacing: 0.1em; 
+  margin-top: 6px; 
+  font-weight: 700;
 }
 
 .stat-divider { 
   width: 1px; 
-  height: 40px; 
+  height: 48px; 
   background: var(--border); 
   align-self: center; 
 }
@@ -160,43 +145,53 @@ body {
 .cta-btn { 
   display: inline-flex; 
   align-items: center; 
-  gap: 10px; 
+  gap: 12px; 
   background: var(--accent); 
-  color: #0a0a0f; 
-  font-family: 'Syne', sans-serif; 
-  font-size: 1rem; 
-  font-weight: 700; 
-  letter-spacing: 0.01em; 
-  padding: 16px 36px; 
-  border-radius: 12px; 
+  color: #000000; 
+  font-family: 'Anton', sans-serif; 
+  font-size: 1.2rem; 
+  font-weight: 400; 
+  letter-spacing: 0.05em; 
+  padding: 18px 48px; 
+  border-radius: 0; /* Botão quadrado estilo Streetwear */
   border: none; 
   cursor: pointer; 
   text-decoration: none; 
-  transition: transform 0.15s, box-shadow 0.15s; 
-  box-shadow: 0 0 32px rgba(0,229,160,0.3); 
+  text-transform: uppercase;
+  transition: all 0.2s ease; 
+  box-shadow: 0 0 0 rgba(0,0,0,0); 
 }
 
 .cta-btn:hover { 
-  transform: translateY(-2px); 
-  box-shadow: 0 0 48px rgba(0,229,160,0.5); 
+  background: #FFFFFF;
+  color: #000000;
+  transform: translateY(-3px); 
+  box-shadow: 0 10px 20px rgba(0,0,0,0.5); 
 }
 
 .cta-btn:hover svg { 
-  transform: translateX(3px); 
+  transform: translateX(5px); 
 }
 
 .cta-btn svg { 
-  transition: transform 0.15s; 
+  transition: transform 0.2s; 
 }
 
 .cta-note { 
-  margin-top: 0.85rem; 
-  font-size: 0.78rem; 
+  margin-top: 1rem; 
+  font-size: 0.8rem; 
   color: var(--muted); 
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
 }
 
 /* Responsividade Mobile */
 @media (max-width: 480px) { 
-  .stats { gap: 1rem; } 
+  .stats { gap: 1.5rem; } 
   .stat-divider { display: none; } 
+  .cta-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
