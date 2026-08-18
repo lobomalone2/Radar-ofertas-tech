@@ -11,22 +11,31 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 
 # ============================================================
-# CONFIG
+# CONFIGURACAO
 # ============================================================
-NOME_GRUPO       = "Garimpos Originais"
-CAMINHO_JSON     = "ofertas_mercadolivre.json"
 
+GRUPOS_DESTINO = [
+    "Garimpos Originais", # Seu grupo principal
+]
+
+# Delays de segurança
+DELAY_ENTRE_MSG = 8    # segundos entre cada oferta no mesmo grupo
+DELAY_MIN_GRUPO = 45   # segundos entre a troca de grupos
+DELAY_MAX_GRUPO = 90   # segundos entre a troca de grupos
+
+CAMINHO_JSON     = "ofertas_mercadolivre.json"
 LIMITE_DIARIO    = 30
-TAMANHO_LOTE     = 4
-DELAY_ENTRE_MSG  = 8
+TAMANHO_LOTE     = 4   # 4 ofertas disparadas por lote em cada grupo
 
 HORARIOS_DISPARO = ["06:00", "08:00", "11:00", "13:00", "15:00", "17:00", "19:00", "21:00"]
+LINK_GRUPO       = "https://chat.whatsapp.com/KRUPdha04CWGBZ454CL7b9"
 
 _estado = {
     "data_atual":    None,
     "enviadas_hoje": 0,
     "indice_fila":   0,
     "fila_do_dia":   [],
+    "enviados_ids":  set(),
     "driver":        None,
     "lock":          threading.Lock(),
 }
@@ -39,13 +48,8 @@ SELETORES_BUSCA = [
     "//input[@type='text' and contains(@class, 'html-input')]"
 ]
 
-SELETORES_CARD_GRUPO = [
-    f'//span[@title="{NOME_GRUPO}"]/ancestor::div[@data-testid="cell-frame-container"]',
-    f'//span[@title="{NOME_GRUPO}"]'
-]
-
 SELETORES_MSG = [
-    '//div[@data-testid="conversation-compose-box-input"]//p',
+    '//div[@data-testid="conversation-compose-box-input"]//div[@contenteditable="true"]',
     '//footer//div[@contenteditable="true"]'
 ]
 
@@ -54,9 +58,19 @@ SELETORES_ENVIAR_MSG = [
     '//span[@data-testid="send"]/ancestor::button'
 ]
 
+SELETORES_CLIP = [
+    '//div[@title="Anexar"]',
+    '//span[@data-testid="plus"]',
+    '//button[@aria-label="Anexar"]'
+]
+
+SELETORES_INPUT_ARQUIVO = [
+    '//input[@type="file"]'
+]
+
 SELETORES_LEGENDA = [
     '//div[@data-testid="media-caption-input-container"]//div[@contenteditable="true"]',
-    '//footer//div[@contenteditable="true"]'
+    '//div[contains(@class, "lexical-rich-text-input")]//div[@contenteditable="true"]'
 ]
 
 SELETORES_ENVIAR_FOTO = [
@@ -70,8 +84,9 @@ SELETORES_CARREGADO = [
 ]
 
 # ============================================================
-# UTILIDADES & OFERTAS
+# UTILS & FUNÇÕES AUXILIARES
 # ============================================================
+
 def log(msg: str):
     print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] {msg}", flush=True)
 
@@ -106,11 +121,8 @@ def clicar(driver, seletores: list, timeout: int = 10):
     driver.execute_script("arguments[0].click();", el)
     return el
 
-def limpar_e_digitar(driver, el, texto: str):
+def digitar(driver, el, texto: str):
     driver.execute_script("arguments[0].focus();", el)
-    time.sleep(0.2)
-    el.send_keys(Keys.CONTROL + "a")
-    el.send_keys(Keys.BACKSPACE)
     time.sleep(0.2)
     
     linhas = texto.split("\n")
@@ -130,6 +142,80 @@ def limpar_e_digitar(driver, el, texto: str):
             el.send_keys(Keys.SHIFT + Keys.ENTER)
     time.sleep(0.3)
 
+# ============================================================
+# FUNÇÕES DE ENVIO DE MENSAGENS
+# ============================================================
+
+def enviar_texto(driver, msg: str):
+    log("💬 Enviando mensagem em texto simples...")
+    campo_msg = achar(driver, SELETORES_MSG, timeout=15)
+    digitar(driver, campo_msg, msg)
+    
+    # Delay essencial para o WhatsApp Web carregar o preview (card com imagem/título)
+    log("⏳ Aguardando carregamento do link preview...")
+    time.sleep(8)
+    
+    try:
+        clicar(driver, SELETORES_ENVIAR_MSG, timeout=5)
+    except TimeoutException:
+        campo_msg.send_keys(Keys.ENTER)
+        
+    time.sleep(2.0)
+    log("✅ Texto enviado!")
+
+def enviar_foto_com_legenda(driver, caminho_foto: str, legenda: str):
+    log("🖼️ Preparando envio de imagem...")
+    
+    # 1. Clica no botão de anexar (+ / clipe)
+    clicar(driver, SELETORES_CLIP, timeout=10)
+    time.sleep(1.2)
+
+    input_file = None
+
+    # Tática 1: Tenta achar o input especificamente filho do botão "Fotos e vídeos"
+    try:
+        input_file = driver.find_element(
+            By.XPATH, 
+            '//button[@aria-label="Fotos e vídeos"]//input[@type="file"]'
+        )
+    except NoSuchElementException:
+        pass
+
+    # Tática 2: Fallback direto no 9º input (índice 8) conforme a estrutura do seu navegador
+    if not input_file:
+        inputs = driver.find_elements(By.XPATH, '//input[@type="file"]')
+        if len(inputs) >= 9:
+            input_file = inputs[8] # 9º elemento (índice 8)
+        elif inputs:
+            input_file = inputs[-1] # Pega o último caso haja menos que 9
+
+    if not input_file:
+        raise NoSuchElementException("Nenhum input de foto/vídeo foi encontrado após abrir o menu.")
+
+    # 2. Injeta o caminho absoluto do arquivo no input correto
+    input_file.send_keys(os.path.abspath(caminho_foto))
+    time.sleep(3.5)  # Aguarda a modal de pré-visualização carregar
+
+    # 3. Digita a legenda na caixa de texto da foto
+    log("📝 Digitando legenda na foto...")
+    campo_legenda = achar(driver, SELETORES_LEGENDA, timeout=15)
+    digitar(driver, campo_legenda, legenda)
+    time.sleep(1.5)
+
+    # 4. Envia a foto
+    log("🚀 Enviando foto com legenda...")
+    try:
+        clicar(driver, SELETORES_ENVIAR_FOTO, timeout=10)
+    except TimeoutException:
+        campo_legenda.send_keys(Keys.ENTER)
+        
+    time.sleep(3.0)
+    log("✅ Foto com legenda enviada com sucesso!")
+
+# ============================================================
+# FILA E FORMATTAÇÃO
+# ============================================================
+
 def carregar_e_embaralhar_fila():
     p = Path(CAMINHO_JSON)
     if not p.exists():
@@ -147,7 +233,6 @@ def carregar_e_embaralhar_fila():
         if link.startswith(('meli.', 'https://meli', 'http://meli')):
             candidatos.append(oferta)
 
-    # O embaralhamento acontece UMA ÚNICA VEZ ao carregar o dia
     random.shuffle(candidatos)
     return candidatos
 
@@ -158,6 +243,7 @@ def resetar_estado_diario():
         "enviadas_hoje": 0,
         "indice_fila":   0,
         "fila_do_dia":   fila,
+        "enviados_ids":  set()
     })
     log(f"🗓️ Estado resetado para {date.today()} — {len(fila)} oferta(s) prontas na fila.")
 
@@ -178,66 +264,84 @@ def formatar_msg(oferta: dict) -> str:
     preco  = oferta.get("preco", "")
     desc   = oferta.get("desconto", "")
     orig   = oferta.get("precoOriginal", "")
-    
+
+    chamadas_topo = [
+        f"*{titulo}*",
+        f"🔥 *{titulo}*",
+        f"⚡ *{titulo}*",
+        f"🚨 *{titulo}*"
+    ]
+
+    banners_ml = [
+        "🛒 *ACHADO NO MERCADO LIVRE!!*",
+        "🛒 *PROMOÇÃO IMPERDÍVEL NO MERCADO LIVRE!*",
+        "🛒 *ACHADINHO DO DIA NO MERCADO LIVRE!*",
+        "🛒 *DESCONTO ESPECIAL NO MERCADO LIVRE!!*"
+    ]
+
+    chamadas_grupo = [
+        "Divulgue o grupo para mais pessoas encontrarem essas ofertas! 😉",
+        "Compartilhe o link do grupo com os amigos para não perderem nenhuma promoção! 👇",
+        "Ajude nosso grupo a crescer! Envie o link para quem gosta de economizar: 😉",
+        "Gostou da oferta? Compartilhe nosso grupo para mais achadinhos como este! 🚀"
+    ]
+
     preco_linha = ""
     if preco and desc:
         preco_linha = f"\n💰 De R$ {orig} por *R$ {preco}* ➡️  {desc}% OFF 🔥"
     elif preco:
         preco_linha = f"\n💰 *R$ {preco}*"
-        
+
+    topo_sorteado    = random.choice(chamadas_topo)
+    banner_sorteado  = random.choice(banners_ml)
+    rodape_sorteado  = random.choice(chamadas_grupo)
+
     return (
-        f"*{titulo}*{preco_linha}\n\n"
-        f"🛒 *ACHADO TECH NO MERCADO LIVRE!!*\n\n"
+        f"{topo_sorteado}{preco_linha}\n\n"
+        f"{banner_sorteado}\n\n"
         f"🔗 {link}\n\n"
+        # f"{rodape_sorteado}\n"
+        # f"{LINK_GRUPO}"
     )
 
 # ============================================================
-# SELENIUM
+# SELENIUM NAVEGAÇÃO
 # ============================================================
-def abrir_grupo(driver):
-    log(f"🔍 Buscando grupo: '{NOME_GRUPO}'")
+
+def abrir_grupo(driver, nome_grupo: str):
+    log(f"🔍 Buscando grupo: '{nome_grupo}'")
     campo = achar(driver, SELETORES_BUSCA, timeout=20)
     driver.execute_script("arguments[0].click();", campo)
+    time.sleep(0.5)
+    
     campo.send_keys(Keys.CONTROL + "a")
     campo.send_keys(Keys.DELETE)
+    time.sleep(0.3)
     
-    for letra in NOME_GRUPO:
+    for letra in nome_grupo:
         campo.send_keys(letra)
-        time.sleep(0.03)
-        
+        time.sleep(0.05)
     time.sleep(1.0)
     campo.send_keys(Keys.ENTER)
     time.sleep(2.0)
     
+    seletores_card_atual = [
+        f'//span[@title="{nome_grupo}"]/ancestor::div[@data-testid="cell-frame-container"]',
+        f'//span[@title="{nome_grupo}"]/ancestor::div[@role="row"]',
+        f'//span[@title="{nome_grupo}"]',
+        f'//span[contains(@title, "{nome_grupo[:10]}")]'
+    ]
+    
     try:
-        clicar(driver, SELETORES_CARD_GRUPO, timeout=5)
+        clicar(driver, seletores_card_atual, timeout=10)
+        log(f"✅ Grupo '{nome_grupo}' aberto com sucesso!")
     except TimeoutException:
-        primeiro = driver.find_element(By.XPATH, '//div[@id="pane-side"]//div[@data-testid="cell-frame-container"]')
+        primeiro = driver.find_element(
+            By.XPATH,
+            '//div[@id="pane-side"]//div[@data-testid="cell-frame-container"]'
+        )
         driver.execute_script("arguments[0].click();", primeiro)
-    time.sleep(2.0)
-
-def enviar_foto_com_legenda(driver, caminho_foto: str, legenda: str):
-    input_file = driver.find_element(By.XPATH, '//input[@type="file"]')
-    input_file.send_keys(os.path.abspath(caminho_foto))
-    
-    # Espera até a janela de legenda aparecer com a foto
-    campo_legenda = achar(driver, SELETORES_LEGENDA, timeout=12)
-    limpar_e_digitar(driver, campo_legenda, legenda)
-    time.sleep(1.0)
-    
-    clicar(driver, SELETORES_ENVIAR_FOTO, timeout=10)
-    time.sleep(3.0)
-
-def enviar_texto(driver, texto: str):
-    campo = achar(driver, SELETORES_MSG, timeout=15)
-    clicar(driver, SELETORES_MSG)
-    limpar_e_digitar(driver, campo, texto)
-    time.sleep(6.0) # Espera preview do link
-    
-    try:
-        clicar(driver, SELETORES_ENVIAR_MSG, timeout=5)
-    except TimeoutException:
-        campo.send_keys(Keys.ENTER)
+        log(f"✅ Grupo '{nome_grupo}' aberto via clique genérico!")
     time.sleep(2.0)
 
 def publicar_oferta(driver, oferta: dict, pasta_temp: str):
@@ -253,62 +357,80 @@ def publicar_oferta(driver, oferta: dict, pasta_temp: str):
             enviar_foto_com_legenda(driver, caminho_foto, msg)
             return
         except Exception as e:
-            log(f"⚠️ Erro ao enviar foto: {e}. Cancelando janela modal...")
+            log(f"⚠️ Erro ao enviar foto: {e}. Cancelando janela modal e tentando em texto...")
             try:
                 driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.ESCAPE)
             except:
                 pass
             time.sleep(1.0)
             
-    # Se não tinha foto ou a foto deu erro, envia em texto
     enviar_texto(driver, msg)
 
 # ============================================================
-# EXECUÇÃO DO LOTE
+# EXECUÇÃO DO LOTE (4 OFERTAS POR GRUPO)
 # ============================================================
+
 def executar_lote():
     if _estado["data_atual"] != date.today():
+        log("🌅 Novo dia — resetando estado.")
         resetar_estado_diario()
 
     with _estado["lock"]:
-        # Pega o lote EXATAMENTE na ordem da fila sem re-embaralhar
-        lote = proximo_lote()
+        lote = proximo_lote() 
         if not lote:
-            log("📭 Fila do dia vazia ou limite atingido.")
+            log("📭 Fila vazia ou limite atingido.")
             return
 
-        log(f"🚀 Disparando lote com {len(lote)} oferta(s)...")
+        log(f"🚀 Disparando Lote de {len(lote)} oferta(s) em {len(GRUPOS_DESTINO)} grupos...")
         driver = _estado["driver"]
 
         try:
+            log("🔄 Recarregando WhatsApp Web para sincronizar...")
             driver.refresh()
-            achar(driver, SELETORES_CARREGADO, timeout=60)
-            time.sleep(3.0)
-            abrir_grupo(driver)
+            achar(driver, SELETORES_CARREGADO, timeout=90)
+            time.sleep(7.0)
         except Exception as e:
-            log(f"❌ Erro ao abrir grupo: {e}")
+            log(f"❌ Erro ao preparar navegador: {e}")
             return
 
         with tempfile.TemporaryDirectory() as pasta:
-            for i, oferta in enumerate(lote):
+            for i, nome_grupo in enumerate(GRUPOS_DESTINO):
                 try:
-                    publicar_oferta(driver, oferta, pasta)
-                    log(f"✅ Oferta {oferta.get('id', '?')} enviada.")
+                    abrir_grupo(driver, nome_grupo)
+                    
+                    # DISPARA AS 4 OFERTAS DO LOTE NO GRUPO ATUAL
+                    for idx, oferta_atual in enumerate(lote):
+                        log(f"   📦 Oferta {idx+1}/{len(lote)} no grupo '{nome_grupo}'")
+                        publicar_oferta(driver, oferta_atual, pasta)
+                        
+                        # Pausa entre ofertas no mesmo grupo
+                        if idx < len(lote) - 1:
+                            time.sleep(DELAY_ENTRE_MSG)
+
+                    log(f"   [Grupo {i+1}/{len(GRUPOS_DESTINO)}] Concluído com {len(lote)} ofertas em '{nome_grupo}'")
+
                 except Exception as e:
-                    log(f"❌ Erro na oferta {oferta.get('id', '?')}: {e}")
-                finally:
-                    # O PONTEIRO AVANÇA SEMPRE para não travar a fila no mesmo item
-                    _estado["enviadas_hoje"] += 1
-                    _estado["indice_fila"]   += 1
+                    log(f"   ❌ Erro no grupo '{nome_grupo}': {e}")
 
-                if i < len(lote) - 1:
-                    time.sleep(DELAY_ENTRE_MSG)
+                # Delay entre a troca de grupos
+                if i < len(GRUPOS_DESTINO) - 1:
+                    tempo_espera = random.randint(DELAY_MIN_GRUPO, DELAY_MAX_GRUPO)
+                    log(f"⏳ Aguardando {tempo_espera}s até o próximo grupo...")
+                    time.sleep(tempo_espera)
 
-        log(f"🏁 Lote finalizado | Progresso hoje: {_estado['enviadas_hoje']}/{LIMITE_DIARIO}")
+            # Atualiza os contadores diários após concluir todos os grupos
+            _estado["enviadas_hoje"] += len(lote)
+            _estado["indice_fila"]   += len(lote)
+            for of in lote:
+                if of.get("id"):
+                    _estado["enviados_ids"].add(of.get("id"))
+
+        log(f"✅ Ciclo do lote concluído | Ofertas acumuladas hoje: {_estado['enviadas_hoje']}/{LIMITE_DIARIO}")
 
 # ============================================================
 # MAIN
 # ============================================================
+
 def main():
     resetar_estado_diario()
     
@@ -325,8 +447,8 @@ def main():
     log("⏳ Aguardando carregamento do WhatsApp...")
     achar(driver, SELETORES_CARREGADO, timeout=120)
     
-    # Roda o primeiro lote assim que abre
-    # executar_lote()
+    # Roda o primeiro lote assim que inicializa
+    executar_lote()
 
     for h in HORARIOS_DISPARO:
         schedule.every().day.at(h).do(executar_lote)

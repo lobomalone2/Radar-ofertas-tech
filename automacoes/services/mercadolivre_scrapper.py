@@ -106,13 +106,18 @@ def main():
     AFFILIATE_TAG = "cdbfghaec46766"
     
     categories = {
-        "MLB23262": "Calçados",
         "MLB273770": "Sandálias e Chinelos",
-        "MLB779362-1": "Tenis",
+        "MLB23262": "Tenis",
         "MLB275574": "Sapatilhas",
-        "MLB31447": "Roupas",
-        "MLB270215": "Moda Fitness",
-        "MLB779362": "Camisetas e Regatas"
+        "MLB1451": "Acessórios da moda",
+        "MLB31447": "Camisetas e Regatas",
+        "MLB107292": "Camisetas",
+        "MLB188064": "Shorts e Bermudas",
+        "MLB438178": "Suplementos e Vitaminas",
+        "MLB3937": "Joias e Relógios",
+        "MLB6284": "Perfumes",
+        "MLB108704": "Vestidos"
+
 
     }
 
