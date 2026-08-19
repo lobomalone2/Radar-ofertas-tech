@@ -1,36 +1,56 @@
-# Radar-ofertas-tech
-.
+# 📡 Radar Ofertas Tech
+
+Sistema autônomo de monitoramento, conversão e distribuição de ofertas de tecnologia. O ecossistema faz a raspagem de descontos no Mercado Livre, converte os links para afiliados, atualiza o catálogo web e envia alertas no WhatsApp.
+
+---
+
+## 🛠️ Tecnologias
+
+* **Frontend:** React 19, Tailwind CSS v4, Vite
+* **Backend & APIs:** Node.js, Express, Evolution API (WhatsApp)
+* **Automação & Scraping:** Python, Selenium
+
+---
+
+## ⚙️ Como Rodar o Projeto
+
+### Pré-requisitos
+* Node.js (v18 ou superior)
+* Python (v3.10 ou superior) + Chrome/Chromedriver
+* Git
+
+---
+
+### 1. Clonar o Repositório
+```bash
+git clone [https://github.com/lobomalone2/Radar-ofertas-tech.git](https://github.com/lobomalone2/Radar-ofertas-tech.git)
+cd Radar-ofertas-tech
 
 
-​📡 Radar Ofertas Tech
+# Entre na pasta do servidor (caso esteja dividida)
+cd backend
 
-​Plataforma de curadoria e monitoramento de ofertas de tecnologia, desenvolvida para facilitar o acesso aos melhores preços do mercado em dispositivos e periféricos.
+# Instale as dependências do Node
+npm install
 
-​🚀 Tecnologias Utilizadas
+# Instale as dependências do Python
+pip install selenium
 
-
-​React 19: Biblioteca para construção da interface.
-
-​Vite: Build tool rápida para o ambiente de desenvolvimento.
-
-​Tailwind CSS v4: Estilização moderna e utilitária.
-
-​JavaScript (ES6+): Lógica e manipulação de dados.
-
-​Git & GitHub: Versionamento de código e deploy.
+# Inicie o servidor
+npm start
 
 
+# Entre na pasta do frontend
+cd frontend
+
+# Instale as dependências
+npm install
+
+# Execute em modo de desenvolvimento
+npm run dev
 
 
+💻 Ambiente de Desenvolvimento
+Projeto iniciado e mantido em ambiente Mobile (Android via Termux/Acode) e posteriormente consolidado no Linux Mint (XFCE) via VS Code.
 
-​📱 Desenvolvimento Mobile-First
-
-​O projeto é desenvolvido integralmente em ambiente Android (via Termux) utilizando:
-​Termux: Emulador de terminal Linux para execução do Node.js.
-​Acode: Editor de código mobile para escrita dos componentes
-
-
-ATUALIZANDO!!
-
-versão standalone e versão gama do projeto toda desenvolvida via termux no android, os commits a partir do dia  09/06 estão sendo desenvolvidos no VS code utilizando o sistema operacional LINUX MINT XFCE.
-
+🌐 Acesse online: radarofertastech.app.br
