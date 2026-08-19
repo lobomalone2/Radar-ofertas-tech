@@ -1,26 +1,31 @@
 import json, os, time, requests, schedule, random
 from datetime import datetime, date
 from pathlib import Path
+from dotenv import load_dotenv
 
 # ============================================================
 # CONFIGURAÇÃO EVOLUTION API & BOT
 # ============================================================
 
-EVOLUTION_URL = "http://localhost:8080"      # URL da sua Evolution API
-INSTANCE_NAME = "bot-promocoes2"             # Nome da instância no Docker
-API_KEY       = "429683C4C977415CAAFCCE10F7D57E11"    # Sua AUTHENTICATION_API_KEY
+load_dotenv()
 
-# Mapeie aqui os nomes legíveis para os IDs reais dos Grupos (@g.us)
+EVOLUTION_URL = os.getenv("EVOLUTION_URL", "http://localhost:8080")
+INSTANCE_NAME = os.getenv("INSTANCE_NAME", "bot-promocoes2")          
+API_KEY = os.getenv("WPP_CLIENT_SECRET")
+
+
 GRUPOS_DESTINO = [
     {"nome": "Garimpos Originais", "jid": "120363427383187788@g.us"}
 ]
 
-# Delays de segurança (em segundos)
-DELAY_ENTRE_MSG = 8     # Pausa de 8s entre cada envio de oferta no mesmo grupo
-DELAY_GRUPO     = 10    # Pausa entre o envio de grupos diferentes
+LINK_SITE = 'www.radarofertastech.app.br'
+
+
+DELAY_ENTRE_MSG = 20     
+DELAY_GRUPO     = 60   
 
 CAMINHO_JSON     = "ofertas_mercadolivre.json"
-LIMITE_DIARIO    = 30
+LIMITE_DIARIO    = 40
 TAMANHO_LOTE     = 4
 
 HORARIOS_DISPARO = ["06:00", "08:00", "11:00", "13:00", "15:00", "17:00", "19:00", "21:00"]
@@ -33,9 +38,6 @@ _estado = {
     "enviados_ids":  set()
 }
 
-# ============================================================
-# UTILS & MENSAGEM
-# ============================================================
 
 def log(msg: str):
     print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] {msg}", flush=True)
@@ -116,11 +118,10 @@ def formatar_msg(oferta: dict) -> str:
         f"{topo_sorteado}{preco_linha}\n\n"
         f"{banner_sorteado}\n\n"
         f"🔗 {link}"
+        f"\n\n💡 Confira mais ofertas em: {LINK_SITE}"
     )
 
-# ============================================================
-# INTEGRACAO COM EVOLUTION API (SEM SELENIUM)
-# ============================================================
+
 
 def disparar_mensagem_evolution(grupo_jid: str, oferta: dict) -> bool:
     """
@@ -135,7 +136,7 @@ def disparar_mensagem_evolution(grupo_jid: str, oferta: dict) -> bool:
         "Content-Type": "application/json"
     }
 
-    # Se houver imagem, usa sendMedia; caso contrário, usa sendText
+
     if url_foto and url_foto.startswith("http"):
         endpoint = f"{EVOLUTION_URL}/message/sendMedia/{INSTANCE_NAME}"
         payload = {
@@ -152,7 +153,7 @@ def disparar_mensagem_evolution(grupo_jid: str, oferta: dict) -> bool:
         }
 
     try:
-        # timeout=(10, 60): 10s para conexão e 60s para ler a resposta do envio
+
         res = requests.post(endpoint, json=payload, headers=headers, timeout=(10, 60))
         res.raise_for_status()
         log(f"   ✅ Oferta enviada: {oferta.get('titulo')[:30]}...")
@@ -164,9 +165,6 @@ def disparar_mensagem_evolution(grupo_jid: str, oferta: dict) -> bool:
         log(f"   ❌ Erro ao enviar oferta via API: {e}")
         return False
 
-# ============================================================
-# EXECUÇÃO DO LOTE
-# ============================================================
 
 def executar_lote():
     if _estado["data_atual"] != date.today():
@@ -200,7 +198,6 @@ def executar_lote():
             log(f"⏳ Aguardando {DELAY_GRUPO}s até o próximo grupo...")
             time.sleep(DELAY_GRUPO)
 
-    # Atualiza contadores do estado diário
     _estado["enviadas_hoje"] += len(lote)
     _estado["indice_fila"]   += len(lote)
     for of in lote:
@@ -209,9 +206,8 @@ def executar_lote():
 
     log(f"✅ Ciclo concluído | Ofertas enviadas hoje: {_estado['enviadas_hoje']}/{LIMITE_DIARIO}")
 
-# ============================================================
-# MAIN
-# ============================================================
+
+
 
 def main():
     resetar_estado_diario()
