@@ -21,36 +21,4 @@ Sistema autônomo de monitoramento, conversão e distribuição de ofertas de te
 
 ---
 
-### 1. Clonar o Repositório
-```bash
-git clone [https://github.com/lobomalone2/Radar-ofertas-tech.git](https://github.com/lobomalone2/Radar-ofertas-tech.git)
-cd Radar-ofertas-tech
-
-
-# Entre na pasta do servidor (caso esteja dividida)
-cd backend
-
-# Instale as dependências do Node
-npm install
-
-# Instale as dependências do Python
-pip install selenium
-
-# Inicie o servidor
-npm start
-
-
-# Entre na pasta do frontend
-cd frontend
-
-# Instale as dependências
-npm install
-
-# Execute em modo de desenvolvimento
-npm run dev
-
-
-💻 Ambiente de Desenvolvimento
-Projeto iniciado e mantido em ambiente Mobile (Android via Termux/Acode) e posteriormente consolidado no Linux Mint (XFCE) via VS Code.
-
 🌐 Acesse online: radarofertastech.app.br
